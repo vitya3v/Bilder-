@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бригадир Кровли</title>
+    
+    <!-- PWA Метатеги -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Бригадир Кровли">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <!-- Подключаем Bootstrap для красивого интерфейса на iPad -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.1/tailwind.min.js"></script>
+    
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans pb-20">
+
+    <!-- Шапка приложения -->
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
+        <h1 class="text-xl font-bold flex items-center gap-2">
+            🏗️ БРИГАДИР КРОВЛИ
+        </h1>
+        <span id="save-status" class="text-xs bg-blue-700 px-2 py-1 rounded">Данные сохранены локально</span>
+    </header>
+
+    <main class="container mx-auto p-4 space-y-6 max-w-4xl">
+
+        <!-- Раздел: Проекты -->
+        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
+            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">📂 Управление проектами</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="font-medium text-gray-700 mb-2">Новый проект</h3>
+                    <form id="project-form" class="space-y-3">
+                        <div>
+                            <label class="block text-sm text-gray-600">Название объекта *</label>
+                            <input type="text" id="proj-name" required class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600">Адрес объекта</label>
+                            <input type="text" id="proj-address" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-sm text-gray-600">Площадь кровли (м²) *</label>
+                                <input type="number" id="proj-area" required class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-600">Дата начала</label>
+                                <input type="date" id="proj-date" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600">Примечания</label>
+                            <textarea id="proj-notes" rows="2" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition">Сохранить проект</button>
+                    </form>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-medium text-gray-700 mb-2">Текущий проект</h3>
+                        <div id="current-project-info" class="space-y-2 text-sm text-gray-600">
+                            <p><strong>Название:</strong> <span id="view-proj-name">—</span></p>
+                            <p><strong>Адрес:</strong> <span id="view-proj-address">—</span></p>
+                            <p><strong>Площадь:</strong> <span id="view-proj-area">—</span> м²</p>
+                            <p><strong>Начало:</strong> <span id="view-proj-date">—</span></p>
+                        </div>
+                    </div>
+                    <button id="delete-project-btn" class="mt-4 w-full bg-red-500 text-white py-2 rounded text-sm font-medium hover:bg-red-600 transition hidden">Удалить проект</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Раздел: Справочник материалов -->
+        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
+            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">📦 Справочник материалов</h2>
+            
+            <form id="material-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="block text-sm text-gray-600">Название материала *</label>
+                    <input type="text" id="mat-name" required class="w-full border rounded p-2 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Тип материала</label>
+                    <select id="mat-type" class="w-full border rounded p-2 outline-none">
+                        <option value="Утеплитель">Утеплитель</option>
+                        <option value="Пароизоляция">Пароизоляция</option>
+                        <option value="Мембрана">Мембрана</option>
+                        <option value="Примыкание">Примыкание</option>
+                        <option value="Проходка">Проходка</option>
+                        <option value="Прочее">Прочее</option>
+                    </select>
+                </div>
+                <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded font-medium hover:bg-green-700 transition">Добавить материал</button>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2">Название</th>
+                            <th class="px-4 py-2">Тип</th>
+                            <th class="px-4 py-2">Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materials-table-body">
+                        <!-- Динамические строки -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Раздел: Логирование работ -->
+        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
+            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">📝 Логирование работ и материала</h2>
+            
+            <form id="log-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-600">Дата *</label>
+                    <input type="date" id="log-date" required class="w-full border rounded p-2 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Слой работ *</label>
+                    <input type="text" id="log-layer" placeholder="Например, Основной слой" required class="w-full border rounded p-2 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Материал *</label>
+                    <select id="log-material" required class="w-full border rounded p-2 outline-none">
+                        <!-- Заполняется из справочника -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-sm text-gray-600">Кол-во (Поднято м²)</label>
+                        <input type="number" id="log-up-m2" class="w-full border rounded p-2 outline-none" value="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600">Кол-во (Использовано м²)</label>
+                        <input type="number" id="log-used-m2" class="w-full border rounded p-2 outline-none" value="0">
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-gray-600">Примечание</label>
+                    <input type="text" id="log-notes" class="w-full border rounded p-2 outline-none" placeholder="Дополнительные детали...">
+                </div>
+                <button type="submit" class="md:col-span-2 bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition">Добавить запись в историю</button>
+            </form>
+        </section>
+
+        <!-- Раздел: История работ и Статистика -->
+        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
+            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">📋 История работ и статистика материалов</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2">Дата</th>
+                            <th class="px-4 py-2">Слой</th>
+                            <th class="px-4 py-2">Материал</th>
+                            <th class="px-4 py-2">Поднято / Использовано</th>
+                            <th class="px-4 py-2">Примечание</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table-body">
+                        <!-- Динамические строки -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Раздел: Управление рабочими и ЗП -->
+        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
+            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">👥 Управление рабочими и расчет ЗП</h2>
+            
+            <form id="worker-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="block text-sm text-gray-600">Имя рабочего *</label>
+                    <input type="text" id="worker-name" required class="w-full border rounded p-2 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Профессия</label>
+                    <select id="worker-role" class="w-full border rounded p-2 outline-none">
+                        <option value="Разнорабочий">Разнорабочий</option>
+                        <option value="Мастер">Мастер</option>
+                        <option value="Прораб">Прораб</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Коэффициент ЗП *</label>
+                    <input type="number" step="0.1" id="worker-rate" value="1.0" required class="w-full border rounded p-2 outline-none">
+                </div>
+                <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition">Добавить рабочего</button>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2">Имя</th>
+                            <th class="px-4 py-2">Роль</th>
+                            <th class="px-4 py-2">Коэффициент</th>
+                            <th class="px-4 py-2">Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workers-table-body">
+                        <!-- Динамические строки -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Скрипты бизнес-логики приложения -->
+    <script>
+        // Инициализация структуры данных в localStorage
+        let appData = JSON.parse(localStorage.getItem('brigadir_data')) || {
+            project: null,
+            materials: [
+                { id: 1, name: "Минеральная вата 100мм", type: "Утеплитель" },
+                { id: 2, name: "Пленка пароизоляционная", type: "Пароизоляция" }
+            ],
+            logs: [],
+            workers: []
+        };
+
+        function saveData() {
+            localStorage.setItem('brigadir_data', JSON.stringify(appData));
+            updateUI();
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            // Текущий проект
+            if (appData.project) {
+                document.getElementById('view-proj-name').innerText = appData.project.name;
+                document.getElementById('view-proj-address').innerText = appData.project.address || '—';
+                document.getElementById('view-proj-area').innerText = appData.project.area;
+                document.getElementById('view-proj-date').innerText = appData.project.date || '—';
+                document.getElementById('delete-project-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('view-proj-name').innerText = '—';
+                document.getElementById('view-proj-address').innerText = '—';
+                document.getElementById('view-proj-area').innerText = '—';
+                document.getElementById('view-proj-date').innerText = '—';
+                document.getElementById('delete-project-btn').classList.add('hidden');
+            }
+
+            // Рендер материалов в таблицу и селектор
+            const matTable = document.getElementById('materials-table-body');
+            const matSelect = document.getElementById('log-material');
+            matTable.innerHTML = '';
+            matSelect.innerHTML = '';
+            
+            appData.materials.forEach(mat => {
+                matTable.innerHTML += `
+                    <tr class="border-b">
+                        <td class="px-4 py-2 text-gray-900">${mat.name}</td>
+                        <td class="px-4 py-2">${mat.type}</td>
+                        <td class="px-4 py-2"><button onclick="deleteMaterial(${mat.id})" class="text-red-500 hover:underline">Удалить</button></td>
+                    </tr>`;
+                matSelect.innerHTML += `<option value="${mat.name}">${mat.name} (${mat.type})</option>`;
+            });
+
+            // Рендер логов
+            const logTable = document.getElementById('logs-table-body');
+            logTable.innerHTML = '';
+            appData.logs.forEach(log => {
+                logTable.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-2">${log.date}</td>
+                        <td class="px-4 py-2">${log.layer}</td>
+                        <td class="px-4 py-2 text-gray-900">${log.material}</td>
+                        <td class="px-4 py-2">+${log.up} м² / -${log.used} м²</td>
+                        <td class="px-4 py-2 text-xs italic">${log.notes || '—'}</td>
+                    </tr>`;
+            });
+
+            // Рендер рабочих
+            const workerTable = document.getElementById('workers-table-body');
+            workerTable.innerHTML = '';
+            appData.workers.forEach((w, idx) => {
+                workerTable.innerHTML += `
+                    <tr class="border-b">
+                        <td class="px-4 py-2 text-gray-900">${w.name}</td>
+                        <td class="px-4 py-2">${w.role}</td>
+                        <td class="px-4 py-2">${w.rate}</td>
+                        <td class="px-4 py-2"><button onclick="deleteWorker(${idx})" class="text-red-500 hover:underline">Удалить</button></td>
+                    </tr>`;
+            });
+        }
+
+        // Слушатели форм
+        document.getElementById('project-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            appData.project = {
+                name: document.getElementById('proj-name').value,
+                address: document.getElementById('proj-address').value,
+                area: document.getElementById('proj-area').value,
+                date: document.getElementById('proj-date').value,
+                notes: document.getElementById('proj-notes').value
+            };
+            saveData();
+            e.target.reset();
+        });
+
+        document.getElementById('delete-project-btn').addEventListener('click', () => {
+            if(confirm('Удалить текущий проект?')) {
+                appData.project = null;
+                saveData();
+            }
+        });
+
+        document.getElementById('material-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            appData.materials.push({
+                id: Date.now(),
+                name: document.getElementById('mat-name').value,
+                type: document.getElementById('mat-type').value
+            });
+            saveData();
+            e.target.reset();
+        });
+
+        function deleteMaterial(id) {
+            appData.materials = appData.materials.filter(m => m.id !== id);
+            saveData();
+        }
+
+        document.getElementById('log-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            appData.logs.push({
+                date: document.getElementById('log-date').value,
+                layer: document.getElementById('log-layer').value,
+                material: document.getElementById('log-material').value,
+                up: document.getElementById('log-up-m2').value,
+                used: document.getElementById('log-used-m2').value,
+                notes: document.getElementById('log-notes').value
+            });
+            saveData();
+            e.target.reset();
+        });
+
+        document.getElementById('worker-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            appData.workers.push({
+                name: document.getElementById('worker-name').value,
+                role: document.getElementById('worker-role').value,
+                rate: document.getElementById('worker-rate').value
+            });
+            saveData();
+            e.target.reset();
+        });
+
+        function deleteWorker(idx) {
+            appData.workers.splice(idx, 1);
+            saveData();
+        }
+
+        // Запуск при старте
+        window.onload = () => {
+            updateUI();
+            // Дефолтная дата сегодня в форму логов
+            document.getElementById('log-date').valueAsDate = new Date();
+        };
+
+        // Регистрация Service Worker для PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('PWA Service Worker готов.'))
+                .catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
