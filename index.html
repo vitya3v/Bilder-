@@ -12,7 +12,7 @@
 
 <title>Бригадир кровли</title>
 
-<!-- Подключение библиотек для экспортa PDF с fallback-обработкой -->
+<!-- Подключение библиотек для экспорта PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
 
@@ -21,17 +21,19 @@
     --text-primary: #000000;
     --text-secondary: #666666;
     --text-danger: #d32f2f;
+    --text-success: #2e7d32;
     --text-warning: #f57c00;
     --text-accent: #007AFF;
     --border: #e0e0e0;
     --border-strong: #d0d0d0;
     --bg-accent: #e3f2fd;
+    --bg-success: #e8f5e9;
     --bg-warning: #fff3e0;
     --bg-danger: #ffebee;
     --surface-1: #f5f5f5;
     --surface-2: #ffffff;
     --fill-accent: #007AFF;
-    --fill-warning: #ff9800;
+    --fill-success: #4caf50;
     --radius: 8px;
   }
   
@@ -40,10 +42,13 @@
       --text-primary: #ffffff;
       --text-secondary: #b0b0b0;
       --text-danger: #ff6b6b;
+      --text-success: #81c784;
       --border: #333333;
       --border-strong: #444444;
       --surface-1: #222222;
       --surface-2: #1a1a1a;
+      --bg-success: #1b381e;
+      --bg-accent: #0d2847;
     }
   }
   
@@ -106,7 +111,7 @@
   .tab-content { display: none; }
   .tab-content.active { display: block; }
   
-  .form-group { margin-bottom: 1.5rem; }
+  .form-group { margin-bottom: 1rem; }
   .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
   .form-group input, .form-group select, .form-group textarea { 
     width: 100%; 
@@ -137,6 +142,7 @@
   }
   .button:active { opacity: 0.7; }
   .button.primary { background: var(--fill-accent); color: white; border-color: var(--fill-accent); }
+  .button.success { background: var(--fill-success); color: white; border-color: var(--fill-success); }
   .button.danger { color: var(--text-danger); border-color: var(--border); }
   .button.small { padding: 6px 12px; font-size: 12px; }
   
@@ -183,14 +189,27 @@
     background: var(--surface-1); 
     padding: 1rem; 
     border-radius: var(--radius); 
-    margin-bottom: 1rem; 
-    border-left: 3px solid var(--border-strong); 
+    margin-bottom: 0.75rem; 
+    border-left: 4px solid var(--border-strong); 
   }
-  .log-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
-  .log-date { font-weight: 500; font-size: 13px; }
-  .log-details { font-size: 12px; color: var(--text-secondary); }
-  .log-photo { max-width: 100%; height: auto; max-height: 300px; margin: 8px 0; border-radius: var(--radius); }
+  .log-item.raise { border-left-color: var(--fill-success); }
+  .log-item.use { border-left-color: var(--fill-accent); }
   
+  .log-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 8px; }
+  .log-date { font-weight: 500; font-size: 12px; color: var(--text-secondary); }
+  .log-details { font-weight: 600; font-size: 14px; }
+  
+  .tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .tag.raise { background: var(--bg-success); color: var(--text-success); }
+  .tag.use { background: var(--bg-accent); color: var(--text-accent); }
+
   .conversion-row { display: grid; grid-template-columns: 120px 1fr 40px; gap: 1rem; margin-bottom: 8px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
   @media (max-width: 500px) {
     .conversion-row { grid-template-columns: 1fr; }
@@ -225,20 +244,22 @@
   .workers-table th { background: var(--surface-1); font-weight: 500; }
   .workers-table .date-col { font-weight: 500; text-align: left; background: var(--surface-1); }
   
-  .day-cell { cursor: pointer; padding: 6px; border-radius: 3px; user-select: none; -webkit-user-select: none; }
-  .day-cell.full { background: #66bb6a; color: white; font-weight: 600; }
-  .day-cell.half { background: #ffa726; color: white; font-weight: 600; }
-  .day-cell.none { background: #ef5350; color: white; font-weight: 600; }
-  
-  .payment-card {
-    background: var(--surface-1);
-    padding: 1rem;
-    border-radius: var(--radius);
-    margin-bottom: 1rem;
-    border-left: 3px solid var(--fill-accent);
-  }
-  
   .empty-state { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 13px; }
+  
+  .stock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .stock-item {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+  }
+  .stock-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .stock-sub { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
+  .stock-val { font-size: 16px; font-weight: 700; color: var(--fill-accent); }
 </style>
 </head>
 <body>
@@ -361,63 +382,111 @@
     </div>
   </div>
   
-  <!-- ТАБ: РАБОТЫ -->
+  <!-- ТАБ: РАБОТЫ (ОБНОВЛЕННЫЙ) -->
   <div class="tab-content" id="logging">
-    <div class="section">
-      <h2>Учёт работ и расхода</h2>
+    
+    <!-- БЛОК 1: ПОДЪЕМ МАТЕРИАЛА -->
+    <div class="section" style="border-top: 4px solid var(--fill-success);">
+      <h2>⬆️ Подъем материала на кровлю</h2>
       <div class="grid-2">
         <div class="form-group">
-          <label>Дата *</label>
-          <input type="date" id="logDate">
+          <label>Дата подъема *</label>
+          <input type="date" id="raiseDate">
         </div>
         <div class="form-group">
           <label>Слой работ *</label>
-          <select id="logLayer"><option value="">Выберите слой</option></select>
+          <select id="raiseLayer"><option value="">Выберите слой</option></select>
         </div>
       </div>
       
       <div class="grid-3">
         <div class="form-group">
           <label>Материал *</label>
-          <select id="logMaterial" onchange="updateMaterialUnits()"><option value="">Выберите материал</option></select>
+          <select id="raiseMaterial" onchange="updateRaiseUnits()"><option value="">Выберите материал</option></select>
         </div>
         <div class="form-group">
           <label>Единица *</label>
-          <select id="logUnit"><option value="">Выберите единицу</option></select>
+          <select id="raiseUnit" onchange="calculateRaiseConversion()"><option value="">Выберите единицу</option></select>
         </div>
         <div class="form-group">
-          <label>Кол-во *</label>
-          <input type="number" id="logAmount" placeholder="1" min="0" step="0.1">
+          <label>Количество *</label>
+          <input type="number" id="raiseAmount" placeholder="10" min="0" step="0.1" oninput="calculateRaiseConversion()">
         </div>
       </div>
       
       <div class="grid-2">
         <div class="form-group">
-          <label>Поднято на кровлю</label>
+          <label>Объем в м² / м³ (авторасчет)</label>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div><label style="font-size: 11px;">м²</label><input type="number" id="logRaisedM2" readonly style="background: var(--surface-1);"></div>
-            <div><label style="font-size: 11px;">м³</label><input type="number" id="logRaisedM3" readonly style="background: var(--surface-1);"></div>
+            <div><label style="font-size: 11px;">м²</label><input type="number" id="raiseM2" readonly style="background: var(--surface-1);"></div>
+            <div><label style="font-size: 11px;">м³</label><input type="number" id="raiseM3" readonly style="background: var(--surface-1);"></div>
           </div>
         </div>
         <div class="form-group">
-          <label>Использовано на кровле</label>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div><label style="font-size: 11px;">м²</label><input type="number" id="logUsedM2" placeholder="0" min="0" step="0.1"></div>
-            <div><label style="font-size: 11px;">м³</label><input type="number" id="logUsedM3" placeholder="0" min="0" step="0.1"></div>
-          </div>
+          <label>Примечание</label>
+          <input type="text" id="raiseNote" placeholder="Номер крана / партии...">
         </div>
       </div>
       
-      <div class="form-group">
-        <label>Примечание</label>
-        <input type="text" id="logNote" placeholder="Особенности смены, условия...">
+      <button class="button success" onclick="addRaiseLog()">Зафиксировать подъем</button>
+    </div>
+
+    <!-- БЛОК 2: ОСТАТКИ НА КРОВЛЕ (ХРАНИЛИЩЕ) -->
+    <div class="section" style="background: var(--surface-1);">
+      <h2>📦 Наличие материалов на кровле (Остатки)</h2>
+      <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 1rem;">Поднятые, но еще не уложенные материалы, доступные для списания</p>
+      <div id="roofStockList" class="stock-grid"></div>
+    </div>
+
+    <!-- БЛОК 3: ИСПОЛЬЗОВАНИЕ МАТЕРИАЛА -->
+    <div class="section" style="border-top: 4px solid var(--fill-accent);">
+      <h2>🔨 Расход (укладка) материала</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Дата выполнения *</label>
+          <input type="date" id="useDate">
+        </div>
+        <div class="form-group">
+          <label>Слой работ *</label>
+          <select id="useLayer"><option value="">Выберите слой</option></select>
+        </div>
       </div>
       
-      <button class="button primary" onclick="addLog()">Добавить запись</button>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Материал *</label>
+          <select id="useMaterial" onchange="updateUseUnits()"><option value="">Выберите материал</option></select>
+        </div>
+        <div class="form-group">
+          <label>Единица *</label>
+          <select id="useUnit" onchange="calculateUseConversion()"><option value="">Выберите единицу</option></select>
+        </div>
+        <div class="form-group">
+          <label>Количество уложено *</label>
+          <input type="number" id="useAmount" placeholder="5" min="0" step="0.1" oninput="calculateUseConversion()">
+        </div>
+      </div>
+      
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Фактически уложено в м² / м³</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div><label style="font-size: 11px;">м²</label><input type="number" id="useM2" readonly style="background: var(--surface-1);"></div>
+            <div><label style="font-size: 11px;">м³</label><input type="number" id="useM3" readonly style="background: var(--surface-1);"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Примечание</label>
+          <input type="text" id="useNote" placeholder="Ось А-Б, состав бригады...">
+        </div>
+      </div>
+      
+      <button class="button primary" onclick="addUseLog()">Зафиксировать расход</button>
     </div>
     
+    <!-- БЛОК 4: ИСТОРИЯ ОПЕРАЦИЙ -->
     <div class="section">
-      <h2>История работ</h2>
+      <h2>📋 Общая история операций (Подъемы и Расход)</h2>
       <div id="logsHistory"></div>
     </div>
   </div>
@@ -486,8 +555,6 @@ let state = {
   layers: [],
   logs: [],
   workers: [],
-  workDays: [],
-  payments: [],
   totalPrice: 0,
   minDayPrice: 3000
 };
@@ -502,7 +569,8 @@ document.addEventListener('DOMContentLoaded', () => {
 function setToday() {
   const today = new Date().toISOString().split('T')[0];
   if(document.getElementById('projectStartDate')) document.getElementById('projectStartDate').value = today;
-  if(document.getElementById('logDate')) document.getElementById('logDate').value = today;
+  if(document.getElementById('raiseDate')) document.getElementById('raiseDate').value = today;
+  if(document.getElementById('useDate')) document.getElementById('useDate').value = today;
 }
 
 function bindTabs() {
@@ -534,7 +602,10 @@ function switchTab(tabName) {
   if(content) content.classList.add('active');
   
   if(tabName === 'stats') renderStats();
-  if(tabName === 'logging') renderLogsHistory();
+  if(tabName === 'logging') {
+    renderRoofStock();
+    renderLogsHistory();
+  }
   if(tabName === 'workers') {
     document.getElementById('totalPrice').value = state.totalPrice || '';
     document.getElementById('minDayPrice').value = state.minDayPrice || 3000;
@@ -565,7 +636,7 @@ function saveProject() {
 
 function deleteProject() {
   if(confirm('Удалить текущий проект и все данные?')) {
-    state = { project: null, materials: [], layers: [], logs: [], workers: [], workDays: [], payments: [], totalPrice: 0, minDayPrice: 3000 };
+    state = { project: null, materials: [], layers: [], logs: [], workers: [], totalPrice: 0, minDayPrice: 3000 };
     saveState();
     render();
     showSyncBadge();
@@ -728,19 +799,16 @@ function renderLayers() {
     <div style="background: var(--surface-1); padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border: 1px solid var(--border);">
       <input type="text" value="${layer.name}" placeholder="Название слоя" style="font-size: 15px; font-weight: 600; border: none; background: transparent; width: 100%; margin-bottom: 1rem;" onchange="updateLayer(${layer.id}, this.value)">
       
-      ${layer.materials.map(lm => {
-        const mat = state.materials.find(m => m.id === lm.materialId);
-        return `
-          <div style="display: grid; grid-template-columns: 1fr 100px 40px; gap: 8px; margin-bottom: 8px; align-items: center;">
-            <select onchange="updateLayerMaterial(${layer.id}, ${lm.id}, this.value, document.getElementById('plan-${lm.id}').value)">
-              <option value="">Материал</option>
-              ${state.materials.map(m => `<option value="${m.id}" ${lm.materialId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
-            </select>
-            <input type="number" id="plan-${lm.id}" placeholder="План" value="${lm.planned}" min="0" step="0.1" onchange="updateLayerMaterial(${layer.id}, ${lm.id}, document.querySelector('[onchange*=\"${lm.id}\"]').value, this.value)">
-            <button class="button danger small" onclick="deleteLayerMaterial(${layer.id},${lm.id})">✕</button>
-          </div>
-        `;
-      }).join('')}
+      ${layer.materials.map(lm => `
+        <div style="display: grid; grid-template-columns: 1fr 100px 40px; gap: 8px; margin-bottom: 8px; align-items: center;">
+          <select onchange="updateLayerMaterial(${layer.id}, ${lm.id}, this.value, document.getElementById('plan-${lm.id}').value)">
+            <option value="">Материал</option>
+            ${state.materials.map(m => `<option value="${m.id}" ${lm.materialId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+          </select>
+          <input type="number" id="plan-${lm.id}" placeholder="План" value="${lm.planned}" min="0" step="0.1" onchange="updateLayerMaterial(${layer.id}, ${lm.id}, document.querySelector('[onchange*=\"${lm.id}\"]').value, this.value)">
+          <button class="button danger small" onclick="deleteLayerMaterial(${layer.id},${lm.id})">✕</button>
+        </div>
+      `).join('')}
       
       <div style="margin-top: 1rem; display: flex; gap: 8px;">
         <button class="button small" onclick="addLayerMaterial(${layer.id})">+ Материал</button>
@@ -750,11 +818,13 @@ function renderLayers() {
   `).join('');
 }
 
-// ===== РАБОТЫ (ЛОГИ) =====
-function updateMaterialUnits() {
-  const matId = parseInt(document.getElementById('logMaterial').value);
+// ===== НОВАЯ ЛОГИКА ВКЛАДКИ «РАБОТЫ» =====
+
+// Подъем: пересчет единиц
+function updateRaiseUnits() {
+  const matId = parseInt(document.getElementById('raiseMaterial').value);
   const mat = state.materials.find(m => m.id === matId);
-  const unitSelect = document.getElementById('logUnit');
+  const unitSelect = document.getElementById('raiseUnit');
   
   unitSelect.innerHTML = '<option value="">Выберите единицу</option>';
   if(mat) {
@@ -762,15 +832,13 @@ function updateMaterialUnits() {
       unitSelect.innerHTML += `<option value="${u.unit}">${u.unit}</option>`;
     });
   }
+  calculateRaiseConversion();
 }
 
-document.getElementById('logAmount')?.addEventListener('input', calculateConversion);
-document.getElementById('logUnit')?.addEventListener('change', calculateConversion);
-
-function calculateConversion() {
-  const matId = parseInt(document.getElementById('logMaterial').value);
-  const unit = document.getElementById('logUnit').value;
-  const amount = parseFloat(document.getElementById('logAmount').value) || 0;
+function calculateRaiseConversion() {
+  const matId = parseInt(document.getElementById('raiseMaterial').value);
+  const unit = document.getElementById('raiseUnit').value;
+  const amount = parseFloat(document.getElementById('raiseAmount').value) || 0;
   
   const mat = state.materials.find(m => m.id === matId);
   if(!mat || !unit) return;
@@ -778,61 +846,185 @@ function calculateConversion() {
   const unitSpec = mat.units.find(u => u.unit === unit);
   if(!unitSpec) return;
   
-  document.getElementById('logRaisedM2').value = (amount * unitSpec.m2).toFixed(2);
-  document.getElementById('logRaisedM3').value = (amount * unitSpec.m3).toFixed(2);
+  document.getElementById('raiseM2').value = (amount * unitSpec.m2).toFixed(2);
+  document.getElementById('raiseM3').value = (amount * unitSpec.m3).toFixed(2);
 }
 
-function addLog() {
-  const date = document.getElementById('logDate').value;
-  const layerId = parseInt(document.getElementById('logLayer').value);
-  const matId = parseInt(document.getElementById('logMaterial').value);
-  const unit = document.getElementById('logUnit').value;
-  const amount = parseFloat(document.getElementById('logAmount').value) || 0;
-  const usedM2 = parseFloat(document.getElementById('logUsedM2').value) || 0;
-  const usedM3 = parseFloat(document.getElementById('logUsedM3').value) || 0;
-  const note = document.getElementById('logNote').value.trim();
+// Добавить подъем
+function addRaiseLog() {
+  const date = document.getElementById('raiseDate').value;
+  const layerId = parseInt(document.getElementById('raiseLayer').value);
+  const matId = parseInt(document.getElementById('raiseMaterial').value);
+  const unit = document.getElementById('raiseUnit').value;
+  const amount = parseFloat(document.getElementById('raiseAmount').value) || 0;
+  const note = document.getElementById('raiseNote').value.trim();
   
   if(!date || !layerId || !matId || !unit || amount <= 0) {
-    alert('Заполните все обязательные поля');
+    alert('Заполните обязательные поля подъема');
     return;
   }
   
-  const raisedM2 = parseFloat(document.getElementById('logRaisedM2').value) || 0;
-  const raisedM3 = parseFloat(document.getElementById('logRaisedM3').value) || 0;
+  const m2 = parseFloat(document.getElementById('raiseM2').value) || 0;
+  const m3 = parseFloat(document.getElementById('raiseM3').value) || 0;
   
   state.logs.push({
     id: Date.now(),
-    date, layerId, matId, unit, amount, raisedM2, raisedM3, usedM2, usedM3, note
+    type: 'raise',
+    date, layerId, matId, unit, amount, m2, m3, note
   });
   
   saveState();
-  clearLoggingForm();
+  document.getElementById('raiseAmount').value = '';
+  document.getElementById('raiseM2').value = '';
+  document.getElementById('raiseM3').value = '';
+  document.getElementById('raiseNote').value = '';
+  
+  renderRoofStock();
   renderLogsHistory();
   showSyncBadge();
 }
 
-function clearLoggingForm() {
-  document.getElementById('logAmount').value = '';
-  document.getElementById('logRaisedM2').value = '';
-  document.getElementById('logRaisedM3').value = '';
-  document.getElementById('logUsedM2').value = '';
-  document.getElementById('logUsedM3').value = '';
-  document.getElementById('logNote').value = '';
+// Расход: пересчет единиц
+function updateUseUnits() {
+  const matId = parseInt(document.getElementById('useMaterial').value);
+  const mat = state.materials.find(m => m.id === matId);
+  const unitSelect = document.getElementById('useUnit');
+  
+  unitSelect.innerHTML = '<option value="">Выберите единицу</option>';
+  if(mat) {
+    mat.units.forEach(u => {
+      unitSelect.innerHTML += `<option value="${u.unit}">${u.unit}</option>`;
+    });
+  }
+  calculateUseConversion();
 }
 
-function deleteLog(id) {
-  state.logs = state.logs.filter(l => l.id !== id);
+function calculateUseConversion() {
+  const matId = parseInt(document.getElementById('useMaterial').value);
+  const unit = document.getElementById('useUnit').value;
+  const amount = parseFloat(document.getElementById('useAmount').value) || 0;
+  
+  const mat = state.materials.find(m => m.id === matId);
+  if(!mat || !unit) return;
+  
+  const unitSpec = mat.units.find(u => u.unit === unit);
+  if(!unitSpec) return;
+  
+  document.getElementById('useM2').value = (amount * unitSpec.m2).toFixed(2);
+  document.getElementById('useM3').value = (amount * unitSpec.m3).toFixed(2);
+}
+
+// Добавить расход
+function addUseLog() {
+  const date = document.getElementById('useDate').value;
+  const layerId = parseInt(document.getElementById('useLayer').value);
+  const matId = parseInt(document.getElementById('useMaterial').value);
+  const unit = document.getElementById('useUnit').value;
+  const amount = parseFloat(document.getElementById('useAmount').value) || 0;
+  const note = document.getElementById('useNote').value.trim();
+  
+  if(!date || !layerId || !matId || !unit || amount <= 0) {
+    alert('Заполните обязательные поля расхода');
+    return;
+  }
+  
+  const m2 = parseFloat(document.getElementById('useM2').value) || 0;
+  const m3 = parseFloat(document.getElementById('useM3').value) || 0;
+  
+  state.logs.push({
+    id: Date.now(),
+    type: 'use',
+    date, layerId, matId, unit, amount, m2, m3, note
+  });
+  
   saveState();
+  document.getElementById('useAmount').value = '';
+  document.getElementById('useM2').value = '';
+  document.getElementById('useM3').value = '';
+  document.getElementById('useNote').value = '';
+  
+  renderRoofStock();
   renderLogsHistory();
   showSyncBadge();
 }
 
+// Расчет и отображение текущих остатков на кровле
+function renderRoofStock() {
+  const container = document.getElementById('roofStockList');
+  if(!container) return;
+  
+  // Агрегируем баланс по связке (слой + материал + единица)
+  const stockMap = {};
+  
+  state.logs.forEach(log => {
+    const key = `${log.layerId}_${log.matId}_${log.unit}`;
+    if(!stockMap[key]) {
+      stockMap[key] = {
+        layerId: log.layerId,
+        matId: log.matId,
+        unit: log.unit,
+        amount: 0,
+        m2: 0,
+        m3: 0
+      };
+    }
+    
+    if(log.type === 'raise') {
+      stockMap[key].amount += log.amount;
+      stockMap[key].m2 += log.m2;
+      stockMap[key].m3 += log.m3;
+    } else if(log.type === 'use') {
+      stockMap[key].amount -= log.amount;
+      stockMap[key].m2 -= log.m2;
+      stockMap[key].m3 -= log.m3;
+    }
+  });
+  
+  const activeStock = Object.values(stockMap).filter(item => item.amount !== 0);
+  
+  if(activeStock.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">На кровле нет поднятых материалов</div>';
+    return;
+  }
+  
+  container.innerHTML = activeStock.map(item => {
+    const layer = state.layers.find(l => l.id === item.layerId);
+    const mat = state.materials.find(m => m.id === item.matId);
+    const isNegative = item.amount < 0;
+    
+    return `
+      <div class="stock-item">
+        <div class="stock-title">${mat?.name || '—'}</div>
+        <div class="stock-sub">${layer?.name || '—'}</div>
+        <div class="stock-val" style="color: ${isNegative ? 'var(--text-danger)' : 'var(--fill-success)'};">
+          ${item.amount.toFixed(1)} ${item.unit}
+        </div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+          ${item.m2.toFixed(1)} м² / ${item.m3.toFixed(1)} м³
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Удаление записи
+function deleteLog(id) {
+  if(confirm('Удалить эту запись из истории?')) {
+    state.logs = state.logs.filter(l => l.id !== id);
+    saveState();
+    renderRoofStock();
+    renderLogsHistory();
+    showSyncBadge();
+  }
+}
+
+// Отображение объединенной истории
 function renderLogsHistory() {
   const historyDiv = document.getElementById('logsHistory');
   if(!historyDiv) return;
   
   if(state.logs.length === 0) {
-    historyDiv.innerHTML = '<div class="empty-state">Записей нет</div>';
+    historyDiv.innerHTML = '<div class="empty-state">История операций пуста</div>';
     return;
   }
   
@@ -841,20 +1033,22 @@ function renderLogsHistory() {
   historyDiv.innerHTML = sorted.map(log => {
     const layer = state.layers.find(l => l.id === log.layerId);
     const mat = state.materials.find(m => m.id === log.matId);
+    const isRaise = log.type === 'raise';
     
     return `
-      <div class="log-item">
+      <div class="log-item ${isRaise ? 'raise' : 'use'}">
         <div class="log-header">
           <div>
-            <div class="log-date">${log.date}</div>
-            <div class="log-details">${layer?.name || '—'} → ${mat?.name || '—'}</div>
+            <span class="tag ${isRaise ? 'raise' : 'use'}">${isRaise ? '⬆️ Подъем' : '🔨 Расход'}</span>
+            <span class="log-date" style="margin-left: 8px;">${log.date}</span>
           </div>
           <button class="button danger small" onclick="deleteLog(${log.id})">✕</button>
         </div>
-        <div style="font-size: 12px;">
-          <strong>${log.amount} ${log.unit}</strong> | Поднято: ${log.raisedM2}м² | Использовано: ${log.usedM2}м²
+        <div class="log-details">${layer?.name || '—'} → ${mat?.name || '—'}</div>
+        <div style="font-size: 13px; margin-top: 4px;">
+          <strong>${log.amount} ${log.unit}</strong> (${log.m2} м² / ${log.m3} м³)
         </div>
-        ${log.note ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${log.note}</div>` : ''}
+        ${log.note ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">💬 ${log.note}</div>` : ''}
       </div>
     `;
   }).join('');
@@ -930,20 +1124,25 @@ function renderStats() {
       const mat = state.materials.find(m => m.id === lm.materialId);
       if(!mat) return;
       
-      const matLogs = state.logs.filter(log => log.layerId === layer.id && log.matId === lm.materialId);
-      const totalUsedM2 = matLogs.reduce((sum, log) => sum + log.usedM2, 0);
+      const raisedLogs = state.logs.filter(log => log.type === 'raise' && log.layerId === layer.id && log.matId === lm.materialId);
+      const usedLogs = state.logs.filter(log => log.type === 'use' && log.layerId === layer.id && log.matId === lm.materialId);
+      
+      const totalRaisedM2 = raisedLogs.reduce((sum, log) => sum + log.m2, 0);
+      const totalUsedM2 = usedLogs.reduce((sum, log) => sum + log.m2, 0);
+      
       const unitSpec = mat.units[0];
       const plannedM2 = lm.planned * (unitSpec?.m2 || 1);
-      const remainingM2 = plannedM2 - totalUsedM2;
+      const stockOnRoof = totalRaisedM2 - totalUsedM2;
       
       html += `
         <div class="stat-card">
           <div style="font-size: 11px; color: var(--text-secondary);">${layer.name}</div>
           <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">${mat.name}</div>
           <div style="font-size: 12px;">План: <strong>${plannedM2.toFixed(1)} м²</strong></div>
-          <div style="font-size: 12px;">Расход: <strong>${totalUsedM2.toFixed(1)} м²</strong></div>
-          <div style="font-size: 12px; font-weight: 600; color: ${remainingM2 < 0 ? 'var(--text-danger)' : 'var(--text-primary)'};">
-            Остаток: ${remainingM2.toFixed(1)} м²
+          <div style="font-size: 12px; color: var(--text-success);">Поднято: <strong>${totalRaisedM2.toFixed(1)} м²</strong></div>
+          <div style="font-size: 12px; color: var(--text-accent);">Уложено: <strong>${totalUsedM2.toFixed(1)} м²</strong></div>
+          <div style="font-size: 12px; font-weight: 600; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px;">
+            Остаток на кровле: ${stockOnRoof.toFixed(1)} м²
           </div>
         </div>
       `;
@@ -956,21 +1155,25 @@ function renderStats() {
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 function renderSelects() {
-  const layerSelect = document.getElementById('logLayer');
-  if(layerSelect) {
-    layerSelect.innerHTML = '<option value="">Выберите слой</option>';
-    state.layers.forEach(layer => {
-      layerSelect.innerHTML += `<option value="${layer.id}">${layer.name}</option>`;
-    });
-  }
+  ['raiseLayer', 'useLayer'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.innerHTML = '<option value="">Выберите слой</option>';
+      state.layers.forEach(layer => {
+        el.innerHTML += `<option value="${layer.id}">${layer.name}</option>`;
+      });
+    }
+  });
   
-  const matSelect = document.getElementById('logMaterial');
-  if(matSelect) {
-    matSelect.innerHTML = '<option value="">Выберите материал</option>';
-    state.materials.forEach(mat => {
-      matSelect.innerHTML += `<option value="${mat.id}">${mat.name}</option>`;
-    });
-  }
+  ['raiseMaterial', 'useMaterial'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.innerHTML = '<option value="">Выберите материал</option>';
+      state.materials.forEach(mat => {
+        el.innerHTML += `<option value="${mat.id}">${mat.name}</option>`;
+      });
+    }
+  });
 }
 
 function render() {
@@ -987,6 +1190,8 @@ function render() {
   renderMaterials();
   renderLayers();
   renderSelects();
+  renderRoofStock();
+  renderLogsHistory();
 }
 
 function exportPDF() {
@@ -996,7 +1201,7 @@ function exportPDF() {
   }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  doc.text(`Отчёт: ${state.project?.name || 'Объект'}`, 10, 10);
+  doc.text(`Отчёт по объекту: ${state.project?.name || 'Объект'}`, 10, 10);
   doc.save('report.pdf');
 }
 
