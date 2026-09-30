@@ -1,1305 +1,364 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Бригадир">
-<meta name="theme-color" content="#ffffff">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расчет ЗП по объекту</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --primary-color: #2563eb;
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
+            --text-color: #1e293b;
+        }
 
-<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23007AFF' width='180' height='180'/><text x='50%' y='50%' font-size='80' fill='white' font-weight='bold' text-anchor='middle' dy='.3em'>Б</text></svg>">
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
 
-<title>Бригадир кровли</title>
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
 
-<!-- Подключение библиотек для экспорта PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
+        .header-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
 
-<style>
-  :root {
-    --text-primary: #000000;
-    --text-secondary: #666666;
-    --text-danger: #d32f2f;
-    --text-success: #2e7d32;
-    --text-warning: #f57c00;
-    --text-accent: #007AFF;
-    --border: #e0e0e0;
-    --border-strong: #d0d0d0;
-    --bg-accent: #e3f2fd;
-    --bg-success: #e8f5e9;
-    --bg-warning: #fff3e0;
-    --bg-danger: #ffebee;
-    --surface-1: #f5f5f5;
-    --surface-2: #ffffff;
-    --fill-accent: #007AFF;
-    --fill-success: #4caf50;
-    --radius: 8px;
-  }
-  
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --text-primary: #ffffff;
-      --text-secondary: #b0b0b0;
-      --text-danger: #ff6b6b;
-      --text-success: #81c784;
-      --border: #333333;
-      --border-strong: #444444;
-      --surface-1: #222222;
-      --surface-2: #1a1a1a;
-      --bg-success: #1b381e;
-      --bg-accent: #0d2847;
-    }
-  }
-  
-  * { 
-    box-sizing: border-box; 
-    margin: 0;
-    padding: 0;
-  }
+        .object-sum-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
 
-  html { 
-    scroll-behavior: smooth;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-    background-color: var(--surface-2);
-  }
+        .object-sum-input input {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px 12px;
+            width: 160px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
 
-  body { 
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; 
-    color: var(--text-primary);
-    background: var(--surface-2);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
-  
-  .app { max-width: 1200px; margin: 0 auto; padding: 1rem; }
-  .header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-  .header h1 { margin: 0; font-size: 24px; }
-  .header p { margin: 4px 0 0 0; color: var(--text-secondary); font-size: 13px; }
-  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  
-  .tabs { 
-    display: flex; 
-    gap: 8px; 
-    border-bottom: 1px solid var(--border); 
-    margin-bottom: 1.5rem; 
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .tab-btn { 
-    background: none; 
-    border: none; 
-    padding: 12px 14px; 
-    font-size: 13px; 
-    cursor: pointer; 
-    border-bottom: 2px solid transparent; 
-    color: var(--text-secondary); 
-    transition: all 0.2s; 
-    white-space: nowrap;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  .tab-btn.active { 
-    color: var(--text-primary); 
-    border-bottom-color: var(--fill-accent); 
-    font-weight: 600;
-  }
-  
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-  
-  .form-group { margin-bottom: 1rem; }
-  .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
-  .form-group input, .form-group select, .form-group textarea { 
-    width: 100%; 
-    padding: 10px 12px; 
-    border: 1px solid var(--border); 
-    border-radius: var(--radius); 
-    font-size: 14px;
-    background: var(--surface-2);
-    color: var(--text-primary);
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  .form-group textarea { resize: vertical; min-height: 60px; }
-  
-  .button { 
-    padding: 10px 16px; 
-    border: 1px solid var(--border); 
-    border-radius: var(--radius); 
-    cursor: pointer; 
-    font-size: 13px; 
-    background: var(--surface-1); 
-    color: var(--text-primary);
-    transition: all 0.2s;
-    -webkit-user-select: none;
-    user-select: none;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  .button:active { opacity: 0.7; }
-  .button.primary { background: var(--fill-accent); color: white; border-color: var(--fill-accent); }
-  .button.success { background: var(--fill-success); color: white; border-color: var(--fill-success); }
-  .button.danger { color: var(--text-danger); border-color: var(--border); }
-  .button.small { padding: 6px 12px; font-size: 12px; }
-  
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
-  @media (max-width: 768px) { 
-    .grid-2, .grid-3 { grid-template-columns: 1fr; } 
-    .header h1 { font-size: 22px; }
-  }
-  
-  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 1rem; }
-  th { background: var(--surface-1); padding: 10px; text-align: left; font-weight: 500; border-bottom: 1px solid var(--border); }
-  td { padding: 10px; border-bottom: 1px solid var(--border); }
-  
-  .section { 
-    background: var(--surface-2); 
-    border: 1px solid var(--border); 
-    border-radius: var(--radius); 
-    padding: 1.5rem; 
-    margin-bottom: 1.5rem; 
-  }
-  
-  .material-card { 
-    background: var(--surface-1); 
-    padding: 1rem; 
-    border-radius: var(--radius); 
-    margin-bottom: 1rem; 
-    border-left: 3px solid var(--fill-accent); 
-  }
-  .material-card h3 { margin: 0 0 8px 0; font-size: 14px; }
-  .material-specs { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
-  .material-units { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
-  .unit-badge { background: var(--surface-2); padding: 6px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--border); }
-  
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-  .stat-card { 
-    background: var(--surface-1); 
-    padding: 1rem; 
-    border-radius: var(--radius); 
-    border: 1px solid var(--border); 
-  }
-  
-  .log-item { 
-    background: var(--surface-1); 
-    padding: 1rem; 
-    border-radius: var(--radius); 
-    margin-bottom: 0.75rem; 
-    border-left: 4px solid var(--border-strong); 
-  }
-  .log-item.raise { border-left-color: var(--fill-success); }
-  .log-item.use { border-left-color: var(--fill-accent); }
-  
-  .log-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 8px; }
-  .log-date { font-weight: 500; font-size: 12px; color: var(--text-secondary); }
-  .log-details { font-weight: 600; font-size: 14px; }
-  
-  .tag {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  .tag.raise { background: var(--bg-success); color: var(--text-success); }
-  .tag.use { background: var(--bg-accent); color: var(--text-accent); }
+        .table-wrapper {
+            overflow-x: auto;
+        }
 
-  .conversion-row { display: grid; grid-template-columns: 120px 1fr 40px; gap: 1rem; margin-bottom: 8px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-  @media (max-width: 500px) {
-    .conversion-row { grid-template-columns: 1fr; }
-  }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
 
-  .sync-badge { 
-    display: inline-block; 
-    padding: 4px 8px; 
-    background: #4caf50; 
-    color: white; 
-    border-radius: 4px; 
-    font-size: 11px;
-    margin-left: 8px;
-  }
-  
-  .workers-table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 700px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-  
-  .workers-table th, .workers-table td {
-    border: 1px solid var(--border);
-    padding: 6px;
-    text-align: center;
-    font-size: 12px;
-  }
-  
-  .workers-table th { background: var(--surface-1); font-weight: 500; }
-  .workers-table .date-col { font-weight: 500; text-align: left; background: var(--surface-1); min-width: 140px; }
-  
-  .work-select {
-    width: 100%;
-    padding: 4px;
-    font-size: 11px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text-primary);
-  }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            text-align: center;
+        }
 
-  .day-comment {
-    width: 100%;
-    min-width: 70px;
-    padding: 4px;
-    font-size: 10px;
-    border: 1px dashed var(--border);
-    border-radius: 4px;
-    background: var(--surface-1);
-    color: var(--text-primary);
-  }
+        th {
+            background-color: #f8fafc;
+            vertical-align: top;
+        }
 
-  .empty-state { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 13px; }
-  
-  .stock-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px;
-  }
-  .stock-item {
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 12px;
-  }
-  .stock-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
-  .stock-sub { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
-  .stock-val { font-size: 16px; font-weight: 700; color: var(--fill-accent); }
-</style>
+        .worker-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 140px;
+        }
+
+        .worker-header input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 4px 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .worker-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .field-label {
+            font-size: 11px;
+            color: #64748b;
+            text-align: left;
+            margin-bottom: -4px;
+        }
+
+        .date-cell {
+            font-weight: 500;
+            white-space: nowrap;
+            width: 120px;
+        }
+
+        .work-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: #f1f5f9;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .work-btn.active {
+            background: #22c55e;
+            color: white;
+            border-color: #16a34a;
+        }
+
+        .add-day-btn {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .add-day-btn:hover {
+            opacity: 0.9;
+        }
+
+        .summary-row {
+            background-color: #f8fafc;
+            font-weight: 500;
+        }
+
+        .summary-title {
+            text-align: right;
+            font-weight: bold;
+            padding-right: 15px;
+            background: #edf2f7;
+        }
+
+        .warning-cell {
+            background-color: var(--danger-bg) !important;
+            color: var(--danger-text) !important;
+            font-weight: bold;
+        }
+
+        .val-highlight {
+            font-weight: bold;
+            font-size: 15px;
+        }
+    </style>
 </head>
 <body>
 
-<div class="app">
-  <div class="header">
-    <div>
-      <h1>Бригадир кровли</h1>
-      <p>Управление материалами и табелем выходов <span class="sync-badge" id="syncBadge">Данные сохранены</span></p>
+<div class="container">
+    <div class="header-panel">
+        <h2>Расчет зарплаты по объекту</h2>
+        <div class="object-sum-input">
+            <label for="objectSum">Сумма за объект (₽):</label>
+            <input type="number" id="objectSum" value="150000" oninput="calculate()">
+        </div>
     </div>
-    <div class="header-actions">
-      <button class="button primary" onclick="exportPDF()" id="exportBtn" style="display:none;">📄 PDF</button>
-    </div>
-  </div>
-  
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="project">Проект</button>
-    <button class="tab-btn" data-tab="materials">Материалы</button>
-    <button class="tab-btn" data-tab="layers">Слои</button>
-    <button class="tab-btn" data-tab="logging">Работы</button>
-    <button class="tab-btn" data-tab="workers">Рабочие</button>
-    <button class="tab-btn" data-tab="stats">Статистика</button>
-  </div>
-  
-  <!-- ТАБ: ПРОЕКТ -->
-  <div class="tab-content active" id="project">
-    <div class="section">
-      <h2>Параметры проекта</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Название объекта *</label>
-          <input type="text" id="projectName" placeholder="Жилой дом на ул. Ленина">
-        </div>
-        <div class="form-group">
-          <label>Адрес объекта</label>
-          <input type="text" id="projectAddress" placeholder="г. Москва, ул. Ленина, д. 15">
-        </div>
-        <div class="form-group">
-          <label>Площадь кровли (м²) *</label>
-          <input type="number" id="projectArea" placeholder="500" min="0" step="0.1">
-        </div>
-        <div class="form-group">
-          <label>Дата начала</label>
-          <input type="date" id="projectStartDate">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Примечания</label>
-        <textarea id="projectNotes" placeholder="Особенности объекта, система кровли..."></textarea>
-      </div>
-      <button class="button primary" onclick="saveProject()">Сохранить проект</button>
-    </div>
-    
-    <div id="projectInfo" style="display:none;">
-      <div class="section">
-        <h2>Текущий проект</h2>
-        <table>
-          <tr><td style="font-weight:500; width:150px;">Название:</td><td id="infoName"></td></tr>
-          <tr><td style="font-weight:500;">Адрес:</td><td id="infoAddress"></td></tr>
-          <tr><td style="font-weight:500;">Площадь:</td><td id="infoArea"></td></tr>
-          <tr><td style="font-weight:500;">Начало:</td><td id="infoDate"></td></tr>
+
+    <div class="table-wrapper">
+        <table id="calcTable">
+            <thead>
+                <tr id="headerRow">
+                    <th class="date-cell">Дата</th>
+                    <!-- Динамические столбцы рабочих -->
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Динамические строки дат -->
+            </tbody>
+            <tfoot>
+                <tr class="summary-row">
+                    <td class="summary-title">Итого ЗП за объект</td>
+                    <!-- Сумма ЗП рабочего -->
+                    <td id="calcTotalContainer" colspan="100"></td>
+                </tr>
+                <tr class="summary-row">
+                    <td class="summary-title">ЗП в день (календарные)</td>
+                    <!-- ЗП / календ. дни -->
+                    <td id="calcCalendarContainer" colspan="100"></td>
+                </tr>
+                <tr class="summary-row">
+                    <td class="summary-title">ЗП в день (фактические)</td>
+                    <!-- ЗП / факт. дни -->
+                    <td id="calcFactContainer" colspan="100"></td>
+                </tr>
+            </tfoot>
         </table>
-        <button class="button danger" onclick="deleteProject()">Удалить проект</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- ТАБ: МАТЕРИАЛЫ -->
-  <div class="tab-content" id="materials">
-    <div class="section">
-      <h2>Справочник материалов</h2>
-      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 1rem;">Определите характеристики материалов и возможные единицы измерения</p>
-      
-      <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--surface-1); border-radius: var(--radius); border: 1px solid var(--border);">
-        <h3 style="margin: 0 0 1rem 0; font-size: 15px;">Добавить новый материал</h3>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Название материала *</label>
-            <input type="text" id="matName" placeholder="Утеплитель 50мм">
-          </div>
-          <div class="form-group">
-            <label>Тип материала</label>
-            <select id="matType">
-              <option value="утеплитель">Утеплитель</option>
-              <option value="пароизоляция">Пароизоляция</option>
-              <option value="мембрана">Мембрана</option>
-              <option value="примыкание">Примыкание</option>
-              <option value="проходка">Проходка</option>
-              <option value="прочее">Прочее</option>
-            </select>
-          </div>
-        </div>
-        
-        <h3 style="margin: 1rem 0; font-size: 14px;">Единицы измерения</h3>
-        <div id="matUnitsInput">
-          <div class="conversion-row">
-            <input type="text" placeholder="Единица" class="unit-name" value="поддон">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div><label style="font-size: 11px;">м²</label><input type="number" class="unit-m2" placeholder="140" min="0" step="0.1"></div>
-              <div><label style="font-size: 11px;">м³</label><input type="number" class="unit-m3" placeholder="7" min="0" step="0.1"></div>
-            </div>
-            <button class="button danger small" onclick="removeUnitInput(this)">✕</button>
-          </div>
-        </div>
-        
-        <button class="button" style="margin: 1rem 0;" onclick="addUnitInput()">+ Ещё единица</button><br>
-        <button class="button primary" onclick="saveMaterial()">Сохранить материал</button>
-      </div>
-      
-      <div id="materialsList"></div>
-    </div>
-  </div>
-  
-  <!-- ТАБ: СЛОИ -->
-  <div class="tab-content" id="layers">
-    <div class="section">
-      <h2>Структура слоёв работ</h2>
-      <div id="layersList"></div>
-      <button class="button primary" onclick="addLayer()">+ Добавить слой</button>
-    </div>
-  </div>
-  
-  <!-- ТАБ: РАБОТЫ -->
-  <div class="tab-content" id="logging">
-    <div class="section" style="border-top: 4px solid var(--fill-success);">
-      <h2>⬆️️ Подъем материала на кровлю</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Дата подъема *</label>
-          <input type="date" id="raiseDate">
-        </div>
-        <div class="form-group">
-          <label>Слой работ *</label>
-          <select id="raiseLayer"><option value="">Выберите слой</option></select>
-        </div>
-      </div>
-      
-      <div class="grid-3">
-        <div class="form-group">
-          <label>Материал *</label>
-          <select id="raiseMaterial" onchange="updateRaiseUnits()"><option value="">Выберите материал</option></select>
-        </div>
-        <div class="form-group">
-          <label>Единица *</label>
-          <select id="raiseUnit" onchange="calculateRaiseConversion()"><option value="">Выберите единицу</option></select>
-        </div>
-        <div class="form-group">
-          <label>Количество *</label>
-          <input type="number" id="raiseAmount" placeholder="10" min="0" step="0.1" oninput="calculateRaiseConversion()">
-        </div>
-      </div>
-      
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Объем в м² / м³ (авторасчет)</label>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div><label style="font-size: 11px;">м²</label><input type="number" id="raiseM2" readonly style="background: var(--surface-1);"></div>
-            <div><label style="font-size: 11px;">м³</label><input type="number" id="raiseM3" readonly style="background: var(--surface-1);"></div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Примечание</label>
-          <input type="text" id="raiseNote" placeholder="Номер крана / партии...">
-        </div>
-      </div>
-      
-      <button class="button success" onclick="addRaiseLog()">Зафиксировать подъем</button>
     </div>
 
-    <div class="section" style="background: var(--surface-1);">
-      <h2>📦 Наличие материалов на кровле (Остатки)</h2>
-      <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 1rem;">Поднятые, но еще не уложенные материалы</p>
-      <div id="roofStockList" class="stock-grid"></div>
-    </div>
-
-    <div class="section" style="border-top: 4px solid var(--fill-accent);">
-      <h2>🔨 Расход (укладка) материала</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Дата выполнения *</label>
-          <input type="date" id="useDate">
-        </div>
-        <div class="form-group">
-          <label>Слой работ *</label>
-          <select id="useLayer"><option value="">Выберите слой</option></select>
-        </div>
-      </div>
-      
-      <div class="grid-3">
-        <div class="form-group">
-          <label>Материал *</label>
-          <select id="useMaterial" onchange="updateUseUnits()"><option value="">Выберите материал</option></select>
-        </div>
-        <div class="form-group">
-          <label>Единица *</label>
-          <select id="useUnit" onchange="calculateUseConversion()"><option value="">Выберите единицу</option></select>
-        </div>
-        <div class="form-group">
-          <label>Количество уложено *</label>
-          <input type="number" id="useAmount" placeholder="5" min="0" step="0.1" oninput="calculateUseConversion()">
-        </div>
-      </div>
-      
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Фактически уложено в м² / м³</label>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div><label style="font-size: 11px;">м²</label><input type="number" id="useM2" readonly style="background: var(--surface-1);"></div>
-            <div><label style="font-size: 11px;">м³</label><input type="number" id="useM3" readonly style="background: var(--surface-1);"></div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Примечание</label>
-          <input type="text" id="useNote" placeholder="Ось А-Б, состав бригады...">
-        </div>
-      </div>
-      
-      <button class="button primary" onclick="addUseLog()">Зафиксировать расход</button>
-    </div>
-    
-    <div class="section">
-      <h2>📋 Общая история операций</h2>
-      <div id="logsHistory"></div>
-    </div>
-  </div>
-  
-  <!-- ТАБ: РАБОЧИЕ -->
-  <div class="tab-content" id="workers">
-    <div class="section">
-      <h2>Управление рабочими</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Имя рабочего *</label>
-          <input type="text" id="workerName" placeholder="Иван Петров">
-        </div>
-        <div class="form-group">
-          <label>Профессия</label>
-          <select id="workerProf">
-            <option value="разнораб">Разнорабочий</option>
-            <option value="мастер">Мастер</option>
-            <option value="прораб">Прораб</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Коэффициент ЗП *</label>
-        <input type="number" id="workerCoef" placeholder="1.0" min="0.1" step="0.1" value="1.0">
-      </div>
-      <button class="button primary" onclick="addWorker()">Добавить рабочего</button>
-    </div>
-
-    <div class="section">
-      <h2>Параметры расчёта ЗП</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Бюджет работ на объект (₽)</label>
-          <input type="number" id="totalPrice" placeholder="100000" min="0" step="1000">
-        </div>
-        <div class="form-group">
-          <label>Минимальная ЗП в день (₽)</label>
-          <input type="number" id="minDayPrice" placeholder="3000" min="0" step="100" value="3000">
-        </div>
-      </div>
-      <button class="button primary" onclick="updateWorkersCalendar()">Обновить параметры</button>
-    </div>
-
-    <div class="section">
-      <h2>Табель выходов и комментариев по дням</h2>
-      <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 1rem;">
-        Укажите статус выхода: <strong>1</strong> (День), <strong>0.5</strong> (Пол дня) или <strong>0</strong> (Не работал). 
-        Внизу таблицы добавьте комментарий о событиях за конкретный день.
-      </p>
-      <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-        <div id="workersCalendar"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ТАБ: СТАТИСТИКА -->
-  <div class="tab-content" id="stats">
-    <div class="section">
-      <h2>Статистика материалов</h2>
-      <div id="statsContent"></div>
-    </div>
-  </div>
+    <button class="add-day-btn" onclick="addDay()">+ Добавить рабочий день</button>
 </div>
 
 <script>
-let state = {
-  project: null,
-  materials: [],
-  layers: [],
-  logs: [],
-  workers: [],
-  attendance: {}, // { "workerId_YYYY-MM-DD": 1.0 / 0.5 / 0 }
-  dayComments: {}, // { "YYYY-MM-DD": "текст" }
-  totalPrice: 0,
-  minDayPrice: 3000
-};
+    let workers = [
+        { id: 1, name: "Игошин", coef: 1.2, minRate: 3500 },
+        { id: 2, name: "Смирнов", coef: 1.0, minRate: 3000 },
+        { id: 3, name: "Петров", coef: 0.8, minRate: 2500 }
+    ];
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadState();
-  setToday();
-  bindTabs();
-  render();
-});
+    let dates = ["2026-09-25", "2026-09-26", "2026-09-27"];
 
-function setToday() {
-  const today = new Date().toISOString().split('T')[0];
-  if(document.getElementById('projectStartDate')) document.getElementById('projectStartDate').value = today;
-  if(document.getElementById('raiseDate')) document.getElementById('raiseDate').value = today;
-  if(document.getElementById('useDate')) document.getElementById('useDate').value = today;
-}
+    // Структура выходов: { "YYYY-MM-DD": { workerId: true/false } }
+    let attendance = {
+        "2026-09-25": { 1: true, 2: true, 3: true },
+        "2026-09-26": { 1: true, 2: true, 3: false },
+        "2026-09-27": { 1: true, 2: true, 3: true }
+    };
 
-function bindTabs() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tabName = btn.getAttribute('data-tab');
-      if(tabName) switchTab(tabName);
-    });
-  });
-}
+    function initHeader() {
+        const headerRow = document.getElementById("headerRow");
+        headerRow.innerHTML = `<th class="date-cell">Дата</th>`;
 
-function showSyncBadge() {
-  const badge = document.getElementById('syncBadge');
-  if(!badge) return;
-  badge.textContent = '✓ Сохранено';
-  badge.style.background = '#4caf50';
-  setTimeout(() => { badge.textContent = 'Данные сохранены'; }, 2000);
-}
-
-function switchTab(tabName) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  
-  const btn = document.querySelector(`[data-tab="${tabName}"]`);
-  const content = document.getElementById(tabName);
-  
-  if(btn) btn.classList.add('active');
-  if(content) content.classList.add('active');
-  
-  if(tabName === 'stats') renderStats();
-  if(tabName === 'logging') {
-    renderRoofStock();
-    renderLogsHistory();
-  }
-  if(tabName === 'workers') {
-    document.getElementById('totalPrice').value = state.totalPrice || '';
-    document.getElementById('minDayPrice').value = state.minDayPrice || 3000;
-    updateWorkersCalendar();
-  }
-  
-  document.getElementById('exportBtn').style.display = state.project ? 'block' : 'none';
-}
-
-// ===== ПРОЕКТ =====
-function saveProject() {
-  const name = document.getElementById('projectName').value.trim();
-  const address = document.getElementById('projectAddress').value.trim();
-  const area = parseFloat(document.getElementById('projectArea').value);
-  const startDate = document.getElementById('projectStartDate').value;
-  const notes = document.getElementById('projectNotes').value.trim();
-  
-  if(!name || isNaN(area)) {
-    alert('Укажите название и площадь объекта');
-    return;
-  }
-  
-  state.project = { name, address, area, startDate, notes, createdAt: new Date().toISOString() };
-  saveState();
-  render();
-  showSyncBadge();
-}
-
-function deleteProject() {
-  if(confirm('Удалить текущий проект и все данные?')) {
-    state = { project: null, materials: [], layers: [], logs: [], workers: [], attendance: {}, dayComments: {}, totalPrice: 0, minDayPrice: 3000 };
-    saveState();
-    render();
-    showSyncBadge();
-  }
-}
-
-// ===== МАТЕРИАЛЫ =====
-function addUnitInput() {
-  const html = `
-    <div class="conversion-row">
-      <input type="text" placeholder="Единица" class="unit-name" value="">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        <div><label style="font-size: 11px;">м²</label><input type="number" class="unit-m2" placeholder="1" min="0" step="0.1"></div>
-        <div><label style="font-size: 11px;">м³</label><input type="number" class="unit-m3" placeholder="0" min="0" step="0.1"></div>
-      </div>
-      <button class="button danger small" onclick="removeUnitInput(this)">✕</button>
-    </div>
-  `;
-  document.getElementById('matUnitsInput').insertAdjacentHTML('beforeend', html);
-}
-
-function removeUnitInput(btn) {
-  btn.closest('.conversion-row').remove();
-}
-
-function saveMaterial() {
-  const name = document.getElementById('matName').value.trim();
-  const type = document.getElementById('matType').value;
-  
-  if(!name) {
-    alert('Заполните название материала');
-    return;
-  }
-  
-  const units = [];
-  document.querySelectorAll('#matUnitsInput .conversion-row').forEach(row => {
-    const unitName = row.querySelector('.unit-name').value.trim();
-    const m2 = parseFloat(row.querySelector('.unit-m2').value) || 0;
-    const m3 = parseFloat(row.querySelector('.unit-m3').value) || 0;
-    if(unitName) units.push({ unit: unitName, m2, m3 });
-  });
-  
-  if(units.length === 0) {
-    alert('Укажите хотя бы одну единицу измерения');
-    return;
-  }
-  
-  state.materials.push({ id: Date.now(), name, type, units, defaultUnit: units[0].unit });
-  document.getElementById('matName').value = '';
-  
-  saveState();
-  renderMaterials();
-  renderSelects();
-  showSyncBadge();
-}
-
-function deleteMaterial(id) {
-  if(confirm('Удалить материал?')) {
-    state.materials = state.materials.filter(m => m.id !== id);
-    saveState();
-    renderMaterials();
-    renderSelects();
-    showSyncBadge();
-  }
-}
-
-function renderMaterials() {
-  const list = document.getElementById('materialsList');
-  if(!list) return;
-  
-  if(state.materials.length === 0) {
-    list.innerHTML = '<div class="empty-state">Список материалов пуст</div>';
-    return;
-  }
-  
-  list.innerHTML = state.materials.map(mat => `
-    <div class="material-card">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-        <div>
-          <h3>${mat.name}</h3>
-          <div class="material-specs">${mat.type}</div>
-          <div class="material-units">
-            ${mat.units.map(u => `<div class="unit-badge">${u.unit}: ${u.m2}м² / ${u.m3}м³</div>`).join('')}
-          </div>
-        </div>
-        <button class="button danger small" onclick="deleteMaterial(${mat.id})">✕</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ===== СЛОИ =====
-function addLayer() {
-  state.layers.push({ id: Date.now(), name: 'Новый слой', materials: [] });
-  saveState();
-  renderLayers();
-  renderSelects();
-  showSyncBadge();
-}
-
-function deleteLayer(id) {
-  state.layers = state.layers.filter(l => l.id !== id);
-  saveState();
-  renderLayers();
-  renderSelects();
-  showSyncBadge();
-}
-
-function updateLayer(id, name) {
-  const layer = state.layers.find(l => l.id === id);
-  if(layer) layer.name = name;
-  saveState();
-  renderSelects();
-  showSyncBadge();
-}
-
-function addLayerMaterial(layerId) {
-  const layer = state.layers.find(l => l.id === layerId);
-  if(layer) {
-    layer.materials.push({ id: Date.now(), materialId: null, planned: 0 });
-    saveState();
-    renderLayers();
-    showSyncBadge();
-  }
-}
-
-function deleteLayerMaterial(layerId, lmId) {
-  const layer = state.layers.find(l => l.id === layerId);
-  if(layer) {
-    layer.materials = layer.materials.filter(m => m.id !== lmId);
-    saveState();
-    renderLayers();
-    showSyncBadge();
-  }
-}
-
-function updateLayerMaterial(layerId, lmId, materialId, planned) {
-  const layer = state.layers.find(l => l.id === layerId);
-  if(layer) {
-    const lm = layer.materials.find(m => m.id === lmId);
-    if(lm) {
-      lm.materialId = parseInt(materialId) || null;
-      lm.planned = parseFloat(planned) || 0;
+        workers.forEach((w, index) => {
+            const th = document.createElement("th");
+            th.innerHTML = `
+                <div class="worker-header">
+                    <input type="text" class="worker-name" value="${w.name}" oninput="workers[${index}].name = this.value">
+                    <span class="field-label">Коэффициент:</span>
+                    <input type="number" step="0.1" value="${w.coef}" oninput="workers[${index}].coef = parseFloat(this.value) || 0; calculate();">
+                    <span class="field-label">Мин. в день (₽):</span>
+                    <input type="number" step="100" value="${w.minRate}" oninput="workers[${index}].minRate = parseFloat(this.value) || 0; calculate();">
+                </div>
+            `;
+            headerRow.appendChild(th);
+        });
     }
-  }
-  saveState();
-  showSyncBadge();
-}
 
-function renderLayers() {
-  const list = document.getElementById('layersList');
-  if(!list) return;
-  
-  if(state.layers.length === 0) {
-    list.innerHTML = '<div class="empty-state">Слои работы не созданы</div>';
-    return;
-  }
-  
-  list.innerHTML = state.layers.map(layer => `
-    <div style="background: var(--surface-1); padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border: 1px solid var(--border);">
-      <input type="text" value="${layer.name}" placeholder="Название слоя" style="font-size: 15px; font-weight: 600; border: none; background: transparent; width: 100%; margin-bottom: 1rem;" onchange="updateLayer(${layer.id}, this.value)">
-      
-      ${layer.materials.map(lm => `
-        <div style="display: grid; grid-template-columns: 1fr 100px 40px; gap: 8px; margin-bottom: 8px; align-items: center;">
-          <select onchange="updateLayerMaterial(${layer.id}, ${lm.id}, this.value, document.getElementById('plan-${lm.id}').value)">
-            <option value="">Материал</option>
-            ${state.materials.map(m => `<option value="${m.id}" ${lm.materialId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
-          </select>
-          <input type="number" id="plan-${lm.id}" placeholder="План" value="${lm.planned}" min="0" step="0.1" onchange="updateLayerMaterial(${layer.id}, ${lm.id}, document.querySelector('[onchange*=\"${lm.id}\"]').value, this.value)">
-          <button class="button danger small" onclick="deleteLayerMaterial(${layer.id},${lm.id})">✕</button>
-        </div>
-      `).join('')}
-      
-      <div style="margin-top: 1rem; display: flex; gap: 8px;">
-        <button class="button small" onclick="addLayerMaterial(${layer.id})">+ Материал</button>
-        <button class="button danger small" onclick="deleteLayer(${layer.id})">Удалить слой</button>
-      </div>
-    </div>
-  `).join('');
-}
+    function renderTable() {
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
 
-// ===== РАБОТЫ =====
-function updateRaiseUnits() {
-  const matId = parseInt(document.getElementById('raiseMaterial').value);
-  const mat = state.materials.find(m => m.id === matId);
-  const unitSelect = document.getElementById('raiseUnit');
-  
-  unitSelect.innerHTML = '<option value="">Выберите единицу</option>';
-  if(mat) {
-    mat.units.forEach(u => {
-      unitSelect.innerHTML += `<option value="${u.unit}">${u.unit}</option>`;
-    });
-  }
-  calculateRaiseConversion();
-}
+        dates.forEach(dateStr => {
+            const tr = document.createElement("tr");
+            let rowHtml = `<td class="date-cell">${formatDate(dateStr)}</td>`;
 
-function calculateRaiseConversion() {
-  const matId = parseInt(document.getElementById('raiseMaterial').value);
-  const unit = document.getElementById('raiseUnit').value;
-  const amount = parseFloat(document.getElementById('raiseAmount').value) || 0;
-  
-  const mat = state.materials.find(m => m.id === matId);
-  if(!mat || !unit) return;
-  
-  const unitSpec = mat.units.find(u => u.unit === unit);
-  if(!unitSpec) return;
-  
-  document.getElementById('raiseM2').value = (amount * unitSpec.m2).toFixed(2);
-  document.getElementById('raiseM3').value = (amount * unitSpec.m3).toFixed(2);
-}
+            workers.forEach(w => {
+                const isWorked = attendance[dateStr] && attendance[dateStr][w.id];
+                rowHtml += `
+                    <td>
+                        <button class="work-btn ${isWorked ? 'active' : ''}" onclick="toggleWork('${dateStr}', ${w.id})">
+                            ${isWorked ? '1' : '0'}
+                        </button>
+                    </td>
+                `;
+            });
 
-function addRaiseLog() {
-  const date = document.getElementById('raiseDate').value;
-  const layerId = parseInt(document.getElementById('raiseLayer').value);
-  const matId = parseInt(document.getElementById('raiseMaterial').value);
-  const unit = document.getElementById('raiseUnit').value;
-  const amount = parseFloat(document.getElementById('raiseAmount').value) || 0;
-  const note = document.getElementById('raiseNote').value.trim();
-  
-  if(!date || !layerId || !matId || !unit || amount <= 0) {
-    alert('Заполните обязательные поля подъема');
-    return;
-  }
-  
-  const m2 = parseFloat(document.getElementById('raiseM2').value) || 0;
-  const m3 = parseFloat(document.getElementById('raiseM3').value) || 0;
-  
-  state.logs.push({
-    id: Date.now(),
-    type: 'raise',
-    date, layerId, matId, unit, amount, m2, m3, note
-  });
-  
-  saveState();
-  document.getElementById('raiseAmount').value = '';
-  document.getElementById('raiseM2').value = '';
-  document.getElementById('raiseM3').value = '';
-  document.getElementById('raiseNote').value = '';
-  
-  renderRoofStock();
-  renderLogsHistory();
-  showSyncBadge();
-}
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        });
 
-function updateUseUnits() {
-  const matId = parseInt(document.getElementById('useMaterial').value);
-  const mat = state.materials.find(m => m.id === matId);
-  const unitSelect = document.getElementById('useUnit');
-  
-  unitSelect.innerHTML = '<option value="">Выберите единицу</option>';
-  if(mat) {
-    mat.units.forEach(u => {
-      unitSelect.innerHTML += `<option value="${u.unit}">${u.unit}</option>`;
-    });
-  }
-  calculateUseConversion();
-}
-
-function calculateUseConversion() {
-  const matId = parseInt(document.getElementById('useMaterial').value);
-  const unit = document.getElementById('useUnit').value;
-  const amount = parseFloat(document.getElementById('useAmount').value) || 0;
-  
-  const mat = state.materials.find(m => m.id === matId);
-  if(!mat || !unit) return;
-  
-  const unitSpec = mat.units.find(u => u.unit === unit);
-  if(!unitSpec) return;
-  
-  document.getElementById('useM2').value = (amount * unitSpec.m2).toFixed(2);
-  document.getElementById('useM3').value = (amount * unitSpec.m3).toFixed(2);
-}
-
-function addUseLog() {
-  const date = document.getElementById('useDate').value;
-  const layerId = parseInt(document.getElementById('useLayer').value);
-  const matId = parseInt(document.getElementById('useMaterial').value);
-  const unit = document.getElementById('useUnit').value;
-  const amount = parseFloat(document.getElementById('useAmount').value) || 0;
-  const note = document.getElementById('useNote').value.trim();
-  
-  if(!date || !layerId || !matId || !unit || amount <= 0) {
-    alert('Заполните обязательные поля расхода');
-    return;
-  }
-  
-  const m2 = parseFloat(document.getElementById('useM2').value) || 0;
-  const m3 = parseFloat(document.getElementById('useM3').value) || 0;
-  
-  state.logs.push({
-    id: Date.now(),
-    type: 'use',
-    date, layerId, matId, unit, amount, m2, m3, note
-  });
-  
-  saveState();
-  document.getElementById('useAmount').value = '';
-  document.getElementById('useM2').value = '';
-  document.getElementById('useM3').value = '';
-  document.getElementById('useNote').value = '';
-  
-  renderRoofStock();
-  renderLogsHistory();
-  showSyncBadge();
-}
-
-function renderRoofStock() {
-  const container = document.getElementById('roofStockList');
-  if(!container) return;
-  
-  const stockMap = {};
-  
-  state.logs.forEach(log => {
-    const key = `${log.layerId}_${log.matId}_${log.unit}`;
-    if(!stockMap[key]) {
-      stockMap[key] = { layerId: log.layerId, matId: log.matId, unit: log.unit, amount: 0, m2: 0, m3: 0 };
+        calculate();
     }
-    if(log.type === 'raise') {
-      stockMap[key].amount += log.amount;
-      stockMap[key].m2 += log.m2;
-      stockMap[key].m3 += log.m3;
-    } else if(log.type === 'use') {
-      stockMap[key].amount -= log.amount;
-      stockMap[key].m2 -= log.m2;
-      stockMap[key].m3 -= log.m3;
+
+    function toggleWork(dateStr, workerId) {
+        if (!attendance[dateStr]) attendance[dateStr] = {};
+        attendance[dateStr][workerId] = !attendance[dateStr][workerId];
+        renderTable();
     }
-  });
-  
-  const activeStock = Object.values(stockMap).filter(item => item.amount !== 0);
-  
-  if(activeStock.length === 0) {
-    container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">На кровле нет поднятых материалов</div>';
-    return;
-  }
-  
-  container.innerHTML = activeStock.map(item => {
-    const layer = state.layers.find(l => l.id === item.layerId);
-    const mat = state.materials.find(m => m.id === item.matId);
-    const isNegative = item.amount < 0;
-    
-    return `
-      <div class="stock-item">
-        <div class="stock-title">${mat?.name || '—'}</div>
-        <div class="stock-sub">${layer?.name || '—'}</div>
-        <div class="stock-val" style="color: ${isNegative ? 'var(--text-danger)' : 'var(--fill-success)'};">
-          ${item.amount.toFixed(1)} ${item.unit}
-        </div>
-        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
-          ${item.m2.toFixed(1)} м² / ${item.m3.toFixed(1)} м³
-        </div>
-      </div>
-    `;
-  }).join('');
-}
 
-function deleteLog(id) {
-  if(confirm('Удалить эту запись из истории?')) {
-    state.logs = state.logs.filter(l => l.id !== id);
-    saveState();
-    renderRoofStock();
-    renderLogsHistory();
-    showSyncBadge();
-  }
-}
+    function addDay() {
+        let lastDate = dates.length > 0 ? new Date(dates[dates.length - 1]) : new Date();
+        lastDate.setDate(lastDate.getDate() + 1);
+        let newDateStr = lastDate.toISOString().split('T')[0];
 
-function renderLogsHistory() {
-  const historyDiv = document.getElementById('logsHistory');
-  if(!historyDiv) return;
-  
-  if(state.logs.length === 0) {
-    historyDiv.innerHTML = '<div class="empty-state">История операций пуста</div>';
-    return;
-  }
-  
-  const sorted = [...state.logs].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
-  historyDiv.innerHTML = sorted.map(log => {
-    const layer = state.layers.find(l => l.id === log.layerId);
-    const mat = state.materials.find(m => m.id === log.matId);
-    const isRaise = log.type === 'raise';
-    
-    return `
-      <div class="log-item ${isRaise ? 'raise' : 'use'}">
-        <div class="log-header">
-          <div>
-            <span class="tag ${isRaise ? 'raise' : 'use'}">${isRaise ? '⬆️ Подъем' : '🔨 Расход'}</span>
-            <span class="log-date" style="margin-left: 8px;">${log.date}</span>
-          </div>
-          <button class="button danger small" onclick="deleteLog(${log.id})">✕</button>
-        </div>
-        <div class="log-details">${layer?.name || '—'} → ${mat?.name || '—'}</div>
-        <div style="font-size: 13px; margin-top: 4px;">
-          <strong>${log.amount} ${log.unit}</strong> (${log.m2} м² / ${log.m3} м³)
-        </div>
-        ${log.note ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">💬 ${log.note}</div>` : ''}
-      </div>
-    `;
-  }).join('');
-}
+        dates.push(newDateStr);
+        attendance[newDateStr] = {};
+        workers.forEach(w => {
+            attendance[newDateStr][w.id] = true;
+        });
 
-// ===== РАБОЧИЕ И ТАБЕЛЬ =====
-function addWorker() {
-  const name = document.getElementById('workerName').value.trim();
-  const prof = document.getElementById('workerProf').value;
-  const coef = parseFloat(document.getElementById('workerCoef').value) || 1.0;
-  
-  if(!name) {
-    alert('Укажите имя рабочего');
-    return;
-  }
-  
-  state.workers.push({ id: Date.now(), name, prof, coef });
-  document.getElementById('workerName').value = '';
-  
-  saveState();
-  updateWorkersCalendar();
-  showSyncBadge();
-}
-
-function getDaysArray() {
-  const days = [];
-  let startDate = state.project?.startDate ? new Date(state.project.startDate) : new Date();
-  if (isNaN(startDate.getTime())) startDate = new Date();
-
-  // Генерируем 14 дней от даты начала проекта
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(startDate);
-    d.setDate(startDate.getDate() + i);
-    days.push(d.toISOString().split('T')[0]);
-  }
-  return days;
-}
-
-function setAttendance(workerId, dateStr, value) {
-  if(!state.attendance) state.attendance = {};
-  state.attendance[`${workerId}_${dateStr}`] = parseFloat(value);
-  saveState();
-  showSyncBadge();
-}
-
-function setDayComment(dateStr, value) {
-  if(!state.dayComments) state.dayComments = {};
-  state.dayComments[dateStr] = value.trim();
-  saveState();
-  showSyncBadge();
-}
-
-function updateWorkersCalendar() {
-  const calendarDiv = document.getElementById('workersCalendar');
-  if(!calendarDiv) return;
-  
-  state.totalPrice = parseFloat(document.getElementById('totalPrice').value) || 0;
-  state.minDayPrice = parseFloat(document.getElementById('minDayPrice').value) || 3000;
-  saveState();
-
-  if(state.workers.length === 0) {
-    calendarDiv.innerHTML = '<div class="empty-state">Рабочие не добавлены</div>';
-    return;
-  }
-  
-  const dates = getDaysArray();
-  
-  let html = '<table class="workers-table"><thead><tr><th class="date-col">Рабочий</th><th>Проф.</th><th>Коэф.</th>';
-  
-  dates.forEach(d => {
-    const dateFormatted = d.split('-').slice(1).join('.');
-    html += `<th>${dateFormatted}</th>`;
-  });
-  
-  html += '<th>Отработано (дней)</th><th>Действие</th></tr></thead><tbody>';
-  
-  state.workers.forEach(w => {
-    let totalWorkerDays = 0;
-    html += `
-      <tr>
-        <td class="date-col"><strong>${w.name}</strong></td>
-        <td>${w.prof}</td>
-        <td>${w.coef}</td>
-    `;
-    
-    dates.forEach(d => {
-      const key = `${w.id}_${d}`;
-      const val = state.attendance && state.attendance[key] !== undefined ? state.attendance[key] : 0;
-      totalWorkerDays += val;
-      
-      html += `
-        <td>
-          <select class="work-select" onchange="setAttendance(${w.id}, '${d}', this.value); updateWorkersCalendar();">
-            <option value="0" ${val === 0 ? 'selected' : ''}>— (0)</option>
-            <option value="0.5" ${val === 0.5 ? 'selected' : ''}>0.5 дня</option>
-            <option value="1" ${val === 1 ? 'selected' : ''}>1 день</option>
-          </select>
-        </td>
-      `;
-    });
-    
-    html += `
-        <td><strong>${totalWorkerDays}</strong></td>
-        <td><button class="button danger small" onclick="deleteWorker(${w.id})">✕</button></td>
-      </tr>
-    `;
-  });
-
-  // Строка с текстовыми комментариями к каждой дате
-  html += '<tr style="background: var(--surface-1);"><td class="date-col"><strong>💬 Комментарий к дню</strong></td><td colspan="2" style="font-size:10px; color:var(--text-secondary);">События/Погода</td>';
-  
-  dates.forEach(d => {
-    const commentVal = (state.dayComments && state.dayComments[d]) ? state.dayComments[d] : '';
-    html += `
-      <td>
-        <input type="text" class="day-comment" placeholder="Заметка..." value="${commentVal}" onchange="setDayComment('${d}', this.value)">
-      </td>
-    `;
-  });
-  
-  html += '<td colspan="2"></td></tr>';
-  
-  html += '</tbody></table>';
-  calendarDiv.innerHTML = html;
-}
-
-function deleteWorker(id) {
-  if(confirm('Удалить рабочего?')) {
-    state.workers = state.workers.filter(w => w.id !== id);
-    saveState();
-    updateWorkersCalendar();
-    showSyncBadge();
-  }
-}
-
-// ===== СТАТИСТИКА =====
-function renderStats() {
-  const statsDiv = document.getElementById('statsContent');
-  if(!statsDiv) return;
-  
-  if(state.layers.length === 0) {
-    statsDiv.innerHTML = '<div class="empty-state">Нет данных для статистики</div>';
-    return;
-  }
-  
-  let html = '<div class="stats-grid">';
-  
-  state.layers.forEach(layer => {
-    layer.materials.forEach(lm => {
-      if(!lm.materialId) return;
-      const mat = state.materials.find(m => m.id === lm.materialId);
-      if(!mat) return;
-      
-      const raisedLogs = state.logs.filter(log => log.type === 'raise' && log.layerId === layer.id && log.matId === lm.materialId);
-      const usedLogs = state.logs.filter(log => log.type === 'use' && log.layerId === layer.id && log.matId === lm.materialId);
-      
-      const totalRaisedM2 = raisedLogs.reduce((sum, log) => sum + log.m2, 0);
-      const totalUsedM2 = usedLogs.reduce((sum, log) => sum + log.m2, 0);
-      
-      const unitSpec = mat.units[0];
-      const plannedM2 = lm.planned * (unitSpec?.m2 || 1);
-      const stockOnRoof = totalRaisedM2 - totalUsedM2;
-      
-      html += `
-        <div class="stat-card">
-          <div style="font-size: 11px; color: var(--text-secondary);">${layer.name}</div>
-          <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">${mat.name}</div>
-          <div style="font-size: 12px;">План: <strong>${plannedM2.toFixed(1)} м²</strong></div>
-          <div style="font-size: 12px; color: var(--text-success);">Поднято: <strong>${totalRaisedM2.toFixed(1)} м²</strong></div>
-          <div style="font-size: 12px; color: var(--text-accent);">Уложено: <strong>${totalUsedM2.toFixed(1)} м²</strong></div>
-          <div style="font-size: 12px; font-weight: 600; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px;">
-            Остаток на кровле: ${stockOnRoof.toFixed(1)} м²
-          </div>
-        </div>
-      `;
-    });
-  });
-  
-  html += '</div>';
-  statsDiv.innerHTML = html;
-}
-
-// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
-function renderSelects() {
-  ['raiseLayer', 'useLayer'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) {
-      el.innerHTML = '<option value="">Выберите слой</option>';
-      state.layers.forEach(layer => {
-        el.innerHTML += `<option value="${layer.id}">${layer.name}</option>`;
-      });
+        renderTable();
     }
-  });
-  
-  ['raiseMaterial', 'useMaterial'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) {
-      el.innerHTML = '<option value="">Выберите материал</option>';
-      state.materials.forEach(mat => {
-        el.innerHTML += `<option value="${mat.id}">${mat.name}</option>`;
-      });
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
     }
-  });
-}
 
-function render() {
-  if(state.project) {
-    document.getElementById('projectInfo').style.display = 'block';
-    document.getElementById('infoName').textContent = state.project.name;
-    document.getElementById('infoAddress').textContent = state.project.address || '—';
-    document.getElementById('infoArea').textContent = state.project.area + ' м²';
-    document.getElementById('infoDate').textContent = state.project.startDate || '—';
-  } else {
-    document.getElementById('projectInfo').style.display = 'none';
-  }
-  
-  renderMaterials();
-  renderLayers();
-  renderSelects();
-  renderRoofStock();
-  renderLogsHistory();
-}
+    function calculate() {
+        const totalObjectSum = parseFloat(document.getElementById("objectSum").value) || 0;
+        const totalCoefSum = workers.reduce((acc, w) => acc + w.coef, 0);
 
-function exportPDF() {
-  if(!window.jspdf) {
-    alert('Ошибка загрузки библиотеки PDF');
-    return;
-  }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.text(`Отчёт по объекту: ${state.project?.name || 'Объект'}`, 10, 10);
-  doc.save('report.pdf');
-}
+        // Календарные дни: разница между первой и последней датой + 1
+        let calendarDays = 1;
+        if (dates.length > 0) {
+            const first = new Date(dates[0]);
+            const last = new Date(dates[dates.length - 1]);
+            const diffTime = Math.abs(last - first);
+            calendarDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        }
 
-function saveState() {
-  localStorage.setItem('brigadeRoofState', JSON.stringify(state));
-}
+        const totalRowHtml = [];
+        const calRowHtml = [];
+        const factRowHtml = [];
 
-function loadState() {
-  const saved = localStorage.getItem('brigadeRoofState');
-  if(saved) {
-    try { 
-      state = Object.assign({ attendance: {}, dayComments: {} }, JSON.parse(saved)); 
-    } catch(e) { console.error(e); }
-  }
-}
+        workers.forEach(w => {
+            // Расчет общей ЗП
+            const workerSalary = totalCoefSum > 0 ? (totalObjectSum / totalCoefSum) * w.coef : 0;
+
+            // Фактические дни
+            let factDays = 0;
+            dates.forEach(d => {
+                if (attendance[d] && attendance[d][w.id]) factDays++;
+            });
+
+            // Расчет ставок в день
+            const dailyCalendar = calendarDays > 0 ? workerSalary / calendarDays : 0;
+            const dailyFact = factDays > 0 ? workerSalary / factDays : 0;
+
+            // Проверка минималки
+            const isCalWarning = dailyCalendar < w.minRate;
+            const isFactWarning = dailyFact < w.minRate;
+
+            totalRowHtml.push(`<td><span class="val-highlight">${Math.round(workerSalary).toLocaleString()} ₽</span></td>`);
+            
+            calRowHtml.push(`
+                <td class="${isCalWarning ? 'warning-cell' : ''}">
+                    ${Math.round(dailyCalendar).toLocaleString()} ₽
+                </td>
+            `);
+
+            factRowHtml.push(`
+                <td class="${isFactWarning ? 'warning-cell' : ''}">
+                    ${Math.round(dailyFact).toLocaleString()} ₽ <br><small>(${factDays} дн.)</small>
+                </td>
+            `);
+        });
+
+        document.getElementById("calcTotalContainer").outerHTML = totalRowHtml.join('');
+        document.getElementById("calcCalendarContainer").outerHTML = calRowHtml.join('');
+        document.getElementById("calcFactContainer").outerHTML = factRowHtml.join('');
+    }
+
+    // Инициализация
+    initHeader();
+    renderTable();
 </script>
 
 </body>
