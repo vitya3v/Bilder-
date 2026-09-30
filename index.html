@@ -1552,6 +1552,13 @@ function render() {
   });
 }
 </script>
-
+<!-- Скрипт для регистрации Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker зарегистрирован успешно!'))
+                .catch(err => console.log('Ошибка регистрации:', err));
+        }
+    </script>
 </body>
 </html>
