@@ -1,391 +1,1557 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бригадир Кровли</title>
-    
-    <!-- PWA Метатеги -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Бригадир">
+<meta name="theme-color" content="#ffffff">
+    <!-- Подключаем манифест PWA -->
     <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Бригадир Кровли">
+    <!-- Специфические теги Apple для iPad/iPhone -->
     <link rel="apple-touch-icon" href="icon.png">
-
-    <!-- Подключаем Bootstrap для красивого интерфейса на iPad -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.1/tailwind.min.js"></script>
-    
-    <style>
-        body {
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-        .safe-area-bottom {
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-    </style>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23007AFF' width='180' height='180'/><text x='50%' y='50%' font-size='80' fill='white' font-weight='bold' text-anchor='middle' dy='.3em'>Б</text></svg>">
+<link rel="manifest" href="data:application/json,{%22name%22:%22Бригадир%20кровли%22,%22short_name%22:%22Бригадир%22,%22start_url%22:%22./%22,%22scope%22:%22./%22,%22display%22:%22standalone%22,%22theme_color%22:%22%23007AFF%22,%22background_color%22:%22%23ffffff%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27><rect fill=%27%23007AFF%27 width=%27192%27 height=%27192%27/><text x=%2750%25%27 y=%2750%25%27 font-size=%27100%27 fill=%27white%27 font-weight=%27bold%27 text-anchor=%27middle%27 dy=%27.3em%27>Б</text></svg>%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22,%22purpose%22:%22any%22}]}">
+<title>Бригадир кровли</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --text-primary: #000;
+    --text-secondary: #666;
+    --text-danger: #d32f2f;
+    --text-warning: #f57c00;
+    --text-accent: #007AFF;
+    --border: #e0e0e0;
+    --border-strong: #d0d0d0;
+    --bg-accent: #e3f2fd;
+    --bg-warning: #fff3e0;
+    --bg-danger: #ffebee;
+    --surface-1: #f5f5f5;
+    --surface-2: #ffffff;
+    --fill-accent: #007AFF;
+    --fill-warning: #ff9800;
+    --radius: 8px;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --text-danger: #ff6b6b;
+      --border: #333333;
+      --border-strong: #444444;
+      --surface-1: #222222;
+      --surface-2: #1a1a1a;
+    }
+  }
+  
+  * { box-sizing: border-box; }
+  html { 
+    scroll-behavior: smooth;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; 
+    margin: 0; 
+    padding: 0; 
+    color: var(--text-primary);
+    background: var(--surface-2);
+  }
+  
+  .app { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+  .header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-top: env(safe-area-inset-top, 0px); }
+  .header h1 { margin: 0; font-size: 24px; }
+  .header p { margin: 4px 0 0 0; color: var(--text-secondary); font-size: 13px; }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  
+  .tabs { 
+    display: flex; 
+    gap: 8px; 
+    border-bottom: 1px solid var(--border); 
+    margin-bottom: 1.5rem; 
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-btn { 
+    background: none; 
+    border: none; 
+    padding: 12px 14px; 
+    font-size: 13px; 
+    cursor: pointer; 
+    border-bottom: 2px solid transparent; 
+    color: var(--text-secondary); 
+    transition: all 0.2s; 
+    white-space: nowrap;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .tab-btn.active { 
+    color: var(--text-primary); 
+    border-bottom-color: var(--fill-accent); 
+  }
+  
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  
+  .form-group { margin-bottom: 1.5rem; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .form-group input, .form-group select, .form-group textarea { 
+    width: 100%; 
+    padding: 10px 12px; 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius); 
+    font-size: 14px;
+    background: var(--surface-2);
+    color: var(--text-primary);
+    -webkit-appearance: none;
+    -webkit-border-radius: var(--radius);
+  }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+  
+  .button { 
+    padding: 10px 16px; 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius); 
+    cursor: pointer; 
+    font-size: 13px; 
+    background: var(--surface-1); 
+    color: var(--text-primary);
+    transition: all 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-appearance: none;
+  }
+  .button:active { opacity: 0.7; }
+  .button.primary { background: var(--fill-accent); color: white; border-color: var(--fill-accent); }
+  .button.primary:active { opacity: 0.8; }
+  .button.danger { color: var(--text-danger); border-color: var(--border); }
+  .button.small { padding: 6px 12px; font-size: 12px; }
+  
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 768px) { 
+    .grid-2, .grid-3 { grid-template-columns: 1fr; } 
+    .header h1 { font-size: 22px; }
+  }
+  
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 1rem; }
+  th { background: var(--surface-1); padding: 10px; text-align: left; font-weight: 500; border-bottom: 1px solid var(--border); }
+  td { padding: 10px; border-bottom: 1px solid var(--border); }
+  tr:active { background: var(--surface-1); }
+  
+  .section { 
+    background: var(--surface-2); 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius); 
+    padding: 1.5rem; 
+    margin-bottom: 1.5rem; 
+  }
+  
+  .material-card { 
+    background: var(--surface-1); 
+    padding: 1rem; 
+    border-radius: var(--radius); 
+    margin-bottom: 1rem; 
+    border-left: 3px solid var(--fill-accent); 
+  }
+  .material-card h3 { margin: 0 0 8px 0; font-size: 14px; }
+  .material-specs { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+  .material-units { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+  .unit-badge { background: var(--surface-2); padding: 6px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--border); }
+  
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card { 
+    background: var(--surface-1); 
+    padding: 1rem; 
+    border-radius: var(--radius); 
+    border: 1px solid var(--border); 
+  }
+  .stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  .stat-value { font-size: 16px; font-weight: 600; }
+  
+  .log-item { 
+    background: var(--surface-1); 
+    padding: 1rem; 
+    border-radius: var(--radius); 
+    margin-bottom: 1rem; 
+    border-left: 3px solid var(--border-strong); 
+  }
+  .log-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; gap: 8px; }
+  .log-date { font-weight: 500; font-size: 13px; }
+  .log-details { font-size: 12px; color: var(--text-secondary); }
+  .log-photo { max-width: 100%; height: auto; max-height: 300px; margin: 8px 0; border-radius: var(--radius); }
+  
+  .photo-upload { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .photo-preview { width: 60px; height: 60px; background: var(--surface-1); border-radius: var(--radius); object-fit: cover; border: 1px solid var(--border); }
+  
+  .conversion-table { background: var(--surface-1); padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border: 1px solid var(--border); }
+  .conversion-row { display: grid; grid-template-columns: 80px 1fr; gap: 1rem; margin-bottom: 8px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .conversion-row:last-child { border-bottom: none; }
+  .conversion-row input { font-size: 13px; }
+  
+  .alert { padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
+  .alert.info { background: var(--bg-accent); color: var(--text-accent); border-left: 3px solid var(--fill-accent); }
+  .alert.warning { background: var(--bg-warning); border-left: 3px solid var(--fill-warning); }
+  
+  .empty-state { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 13px; }
+  
+  .sync-badge { 
+    display: inline-block; 
+    padding: 4px 8px; 
+    background: #4caf50; 
+    color: white; 
+    border-radius: 4px; 
+    font-size: 11px;
+    margin-left: 8px;
+  }
+  
+  .workers-table {
+    border-collapse: collapse;
+    min-width: 600px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  
+  .workers-table th, .workers-table td {
+    border: 1px solid var(--border);
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+  }
+  
+  .workers-table th {
+    background: var(--surface-1);
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+  }
+  
+  .workers-table td {
+    min-width: 60px;
+  }
+  
+  .workers-table .date-col {
+    min-width: 70px;
+    font-weight: 500;
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: var(--surface-1);
+    z-index: 1;
+  }
+  
+  .workers-table .date-col-header {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+  }
+  
+  .worker-header {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    min-height: 100px;
+    font-weight: 600;
+    font-size: 11px;
+  }
+  
+  .day-cell {
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  
+  .day-cell.full { background: #66bb6a; color: white; font-weight: 600; }
+  .day-cell.half { background: #ffa726; color: white; font-weight: 600; }
+  .day-cell.none { background: #ef5350; color: white; font-weight: 600; }
+  
+  .day-cell:hover { opacity: 0.8; }
+  
+  .salary-highlighted {
+    font-weight: 600;
+  }
+  
+  .payment-card {
+    background: var(--surface-1);
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    border-left: 3px solid var(--fill-accent);
+  }
+  
+  .payment-card input {
+    font-size: 13px;
+    padding: 6px;
+  }
+</style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans pb-20">
+<body>
 
-    <!-- Шапка приложения -->
-    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
-        <h1 class="text-xl font-bold flex items-center gap-2">
-            🏗️ БРИГАДИР КРОВЛИ
-        </h1>
-        <span id="save-status" class="text-xs bg-blue-700 px-2 py-1 rounded">Данные сохранены локально</span>
-    </header>
-
-    <main class="container mx-auto p-4 space-y-6 max-w-4xl">
-
-        <!-- Раздел: Проекты -->
-        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
-            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">📂 Управление проектами</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <h3 class="font-medium text-gray-700 mb-2">Новый проект</h3>
-                    <form id="project-form" class="space-y-3">
-                        <div>
-                            <label class="block text-sm text-gray-600">Название объекта *</label>
-                            <input type="text" id="proj-name" required class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">Адрес объекта</label>
-                            <input type="text" id="proj-address" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-sm text-gray-600">Площадь кровли (м²) *</label>
-                                <input type="number" id="proj-area" required class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600">Дата начала</label>
-                                <input type="date" id="proj-date" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">Примечания</label>
-                            <textarea id="proj-notes" rows="2" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none"></textarea>
-                        </div>
-                        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition">Сохранить проект</button>
-                    </form>
-                </div>
-
-                <div class="bg-gray-50 p-4 rounded-lg flex flex-col justify-between">
-                    <div>
-                        <h3 class="font-medium text-gray-700 mb-2">Текущий проект</h3>
-                        <div id="current-project-info" class="space-y-2 text-sm text-gray-600">
-                            <p><strong>Название:</strong> <span id="view-proj-name">—</span></p>
-                            <p><strong>Адрес:</strong> <span id="view-proj-address">—</span></p>
-                            <p><strong>Площадь:</strong> <span id="view-proj-area">—</span> м²</p>
-                            <p><strong>Начало:</strong> <span id="view-proj-date">—</span></p>
-                        </div>
-                    </div>
-                    <button id="delete-project-btn" class="mt-4 w-full bg-red-500 text-white py-2 rounded text-sm font-medium hover:bg-red-600 transition hidden">Удалить проект</button>
-                </div>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>Бригадир кровли</h1>
+      <p>Управление материалами на стройке<span class="sync-badge" id="syncBadge">Данные сохранены</span></p>
+    </div>
+    <div class="header-actions">
+      <button class="button primary" onclick="exportPDF()" id="exportBtn" style="display:none;">📄 PDF</button>
+    </div>
+  </div>
+  
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="project">Проект</button>
+    <button class="tab-btn" data-tab="materials">Материалы</button>
+    <button class="tab-btn" data-tab="layers">Слои</button>
+    <button class="tab-btn" data-tab="logging">Работы</button>
+    <button class="tab-btn" data-tab="workers">Рабочие</button>
+    <button class="tab-btn" data-tab="stats">Статистика</button>
+  </div>
+  
+  <!-- ТАБ: ПРОЕКТ -->
+  <div class="tab-content active" id="project">
+    <div class="section">
+      <h2>Новый проект</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Название объекта *</label>
+          <input type="text" id="projectName" placeholder="Жилой дом на ул. Ленина">
+        </div>
+        <div class="form-group">
+          <label>Адрес объекта</label>
+          <input type="text" id="projectAddress" placeholder="г. Москва, ул. Ленина, д. 15">
+        </div>
+        <div class="form-group">
+          <label>Площадь кровли (м²) *</label>
+          <input type="number" id="projectArea" placeholder="500" min="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Дата начала</label>
+          <input type="date" id="projectStartDate">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Примечания</label>
+        <textarea id="projectNotes" placeholder="Особенности объекта, система кровли..."></textarea>
+      </div>
+      <button class="button primary" onclick="saveProject()">Сохранить проект</button>
+    </div>
+    
+    <div id="projectInfo" style="display:none;">
+      <div class="section">
+        <h2>Текущий проект</h2>
+        <table>
+          <tr><td style="font-weight:500; width:150px;">Название:</td><td id="infoName"></td></tr>
+          <tr><td style="font-weight:500;">Адрес:</td><td id="infoAddress"></td></tr>
+          <tr><td style="font-weight:500;">Площадь:</td><td id="infoArea"></td></tr>
+          <tr><td style="font-weight:500;">Начало:</td><td id="infoDate"></td></tr>
+        </table>
+        <button class="button danger" onclick="deleteProject()">Удалить проект</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ТАБ: МАТЕРИАЛЫ -->
+  <div class="tab-content" id="materials">
+    <div class="section">
+      <h2>Справочник материалов</h2>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 1rem;">Определите характеристики материалов и возможные единицы измерения</p>
+      
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--surface-1); border-radius: var(--radius); border-left: 3px solid var(--fill-accent); border: 1px solid var(--border);">
+        <h3 style="margin: 0 0 1rem 0; font-size: 15px;">Добавить новый материал</h3>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Название материала *</label>
+            <input type="text" id="matName" placeholder="Вата 50мм">
+          </div>
+          <div class="form-group">
+            <label>Тип материала</label>
+            <select id="matType">
+              <option value="утеплитель">Утеплитель</option>
+              <option value="пароизоляция">Пароизоляция</option>
+              <option value="мембрана">Мембрана</option>
+              <option value="примыкание">Примыкание</option>
+              <option value="проходка">Проходка</option>
+              <option value="прочее">Прочее</option>
+            </select>
+          </div>
+        </div>
+        
+        <h3 style="margin: 1.5rem 0 1rem 0; font-size: 14px;">Единицы измерения</h3>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 1rem;">Укажите для каждой единицы, сколько м² и м³ в ней.</p>
+        
+        <div id="matUnitsInput">
+          <div class="conversion-row">
+            <input type="text" placeholder="Единица" class="unit-name" value="поддон">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div><label style="font-size: 11px;">м²</label><input type="number" class="unit-m2" placeholder="140" min="0" step="0.1"></div>
+              <div><label style="font-size: 11px;">м³</label><input type="number" class="unit-m3" placeholder="7" min="0" step="0.1"></div>
             </div>
-        </section>
+            <button class="button danger small" onclick="removeUnitInput(this)">✕</button>
+          </div>
+        </div>
+        
+        <button class="button" style="margin-bottom: 1rem; margin-top: 1rem;" onclick="addUnitInput()">+ Ещё единица</button>
+        <button class="button primary" onclick="saveMaterial()">Сохранить материал</button>
+      </div>
+      
+      <div id="materialsList"></div>
+    </div>
+  </div>
+  
+  <!-- ТАБ: СЛОИ -->
+  <div class="tab-content" id="layers">
+    <div class="section">
+      <h2>Структура слоёв работ</h2>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 1rem;">Определите слои и плановые объёмы материалов</p>
+      
+      <div id="layersList"></div>
+      
+      <button class="button primary" onclick="addLayer()">+ Добавить слой</button>
+      <button class="button" onclick="saveState(); showSyncBadge(); alert('Слои сохранены!');" style="margin-left: 8px;">💾 Сохранить</button>
+    </div>
+  </div>
+  
+  <!-- ТАБ: РАБОТЫ -->
+  <div class="tab-content" id="logging">
+    <div class="section">
+      <h2>Логирование работ и материала</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Дата *</label>
+          <input type="date" id="logDate">
+        </div>
+        <div class="form-group">
+          <label>Слой работ *</label>
+          <select id="logLayer">
+            <option value="">Выберите слой</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Материал *</label>
+          <select id="logMaterial" onchange="updateMaterialUnits()">
+            <option value="">Выберите материал</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Единица *</label>
+          <select id="logUnit">
+            <option value="">Выберите единицу</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Кол-во *</label>
+          <input type="number" id="logAmount" placeholder="2" min="0" step="0.1">
+        </div>
+      </div>
+      
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Поднято на кровлю</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div><label style="font-size: 11px;">м²</label><input type="number" id="logRaisedM2" placeholder="140" readonly style="background: var(--surface-1);" min="0" step="0.1"></div>
+            <div><label style="font-size: 11px;">м³</label><input type="number" id="logRaisedM3" placeholder="7" readonly style="background: var(--surface-1);" min="0" step="0.1"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Использовано</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div><label style="font-size: 11px;">м²</label><input type="number" id="logUsedM2" placeholder="140" min="0" step="0.1"></div>
+            <div><label style="font-size: 11px;">м³</label><input type="number" id="logUsedM3" placeholder="7" min="0" step="0.1"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Фото слоя</label>
+        <div class="photo-upload">
+          <input type="file" id="logPhoto" accept="image/*" capture="environment">
+          <img id="photoPreview" class="photo-preview" style="display:none;">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Примечание</label>
+        <input type="text" id="logNote" placeholder="Стыки, примыкания, сложные участки...">
+      </div>
+      
+      <button class="button primary" onclick="addLog()">Добавить запись</button>
+    </div>
+    
+    <div class="section">
+      <h2>История работ</h2>
+      <div id="logsHistory"></div>
+    </div>
+  </div>
+  
+  <!-- ТАБ: РАБОЧИЕ -->
+  <div class="tab-content" id="workers">
+    <div class="section">
+      <h2>Управление рабочими</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Имя рабочего *</label>
+          <input type="text" id="workerName" placeholder="Иван Петров">
+        </div>
+        <div class="form-group">
+          <label>Профессия</label>
+          <select id="workerProf">
+            <option value="разнораб">Разнорабочий</option>
+            <option value="мастер">Мастер</option>
+            <option value="прораб">Прораб</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Коэффициент ЗП *</label>
+        <input type="number" id="workerCoef" placeholder="1.0" min="0.1" step="0.1">
+      </div>
+      <button class="button primary" onclick="addWorker()">Добавить рабочего</button>
+    </div>
 
-        <!-- Раздел: Справочник материалов -->
-        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
-            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">📦 Справочник материалов</h2>
-            
-            <form id="material-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                    <label class="block text-sm text-gray-600">Название материала *</label>
-                    <input type="text" id="mat-name" required class="w-full border rounded p-2 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-600">Тип материала</label>
-                    <select id="mat-type" class="w-full border rounded p-2 outline-none">
-                        <option value="Утеплитель">Утеплитель</option>
-                        <option value="Пароизоляция">Пароизоляция</option>
-                        <option value="Мембрана">Мембрана</option>
-                        <option value="Примыкание">Примыкание</option>
-                        <option value="Проходка">Проходка</option>
-                        <option value="Прочее">Прочее</option>
-                    </select>
-                </div>
-                <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded font-medium hover:bg-green-700 transition">Добавить материал</button>
-            </form>
+    <div class="section">
+      <h2>Параметры расчёта ЗП</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Цена работ за объект (₽) *</label>
+          <input type="number" id="totalPrice" placeholder="100000" min="0" step="1000">
+        </div>
+        <div class="form-group">
+          <label>Минимальная ЗП в день (₽)</label>
+          <input type="number" id="minDayPrice" placeholder="3000" min="0" step="100" value="3000">
+        </div>
+      </div>
+      <button class="button primary" onclick="updateWorkersCalendar()">Обновить расчёты</button>
+    </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-2">Название</th>
-                            <th class="px-4 py-2">Тип</th>
-                            <th class="px-4 py-2">Действие</th>
-                        </tr>
-                    </thead>
-                    <tbody id="materials-table-body">
-                        <!-- Динамические строки -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+    <div class="section">
+      <h2>График работ</h2>
+      <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div id="workersCalendar"></div>
+      </div>
+    </div>
 
-        <!-- Раздел: Логирование работ -->
-        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
-            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">📝 Логирование работ и материала</h2>
-            
-            <form id="log-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm text-gray-600">Дата *</label>
-                    <input type="date" id="log-date" required class="w-full border rounded p-2 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-600">Слой работ *</label>
-                    <input type="text" id="log-layer" placeholder="Например, Основной слой" required class="w-full border rounded p-2 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-600">Материал *</label>
-                    <select id="log-material" required class="w-full border rounded p-2 outline-none">
-                        <!-- Заполняется из справочника -->
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-sm text-gray-600">Кол-во (Поднято м²)</label>
-                        <input type="number" id="log-up-m2" class="w-full border rounded p-2 outline-none" value="0">
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-600">Кол-во (Использовано м²)</label>
-                        <input type="number" id="log-used-m2" class="w-full border rounded p-2 outline-none" value="0">
-                    </div>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm text-gray-600">Примечание</label>
-                    <input type="text" id="log-notes" class="w-full border rounded p-2 outline-none" placeholder="Дополнительные детали...">
-                </div>
-                <button type="submit" class="md:col-span-2 bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition">Добавить запись в историю</button>
-            </form>
-        </section>
+    <div class="section">
+      <h2>Выплаты ЗП</h2>
+      <button class="button" onclick="addPayment()">+ Добавить выплату</button>
+      <div id="paymentsList" style="margin-top: 1rem;"></div>
+    </div>
+  </div>
 
-        <!-- Раздел: История работ и Статистика -->
-        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
-            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">📋 История работ и статистика материалов</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-2">Дата</th>
-                            <th class="px-4 py-2">Слой</th>
-                            <th class="px-4 py-2">Материал</th>
-                            <th class="px-4 py-2">Поднято / Использовано</th>
-                            <th class="px-4 py-2">Примечание</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logs-table-body">
-                        <!-- Динамические строки -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+  <!-- ТАБ: СТАТИСТИКА -->
+  <div class="tab-content" id="stats">
+    <div class="section">
+      <h2>Статистика материалов</h2>
+      <div id="statsContent"></div>
+    </div>
+  </div>
+</div>
 
-        <!-- Раздел: Управление рабочими и ЗП -->
-        <section class="bg-white p-6 rounded-xl shadow-sm space-y-4">
-            <h2 class="text-lg font-semibold text-blue-600 border-b pb-2">👥 Управление рабочими и расчет ЗП</h2>
-            
-            <form id="worker-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                    <label class="block text-sm text-gray-600">Имя рабочего *</label>
-                    <input type="text" id="worker-name" required class="w-full border rounded p-2 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-600">Профессия</label>
-                    <select id="worker-role" class="w-full border rounded p-2 outline-none">
-                        <option value="Разнорабочий">Разнорабочий</option>
-                        <option value="Мастер">Мастер</option>
-                        <option value="Прораб">Прораб</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-600">Коэффициент ЗП *</label>
-                    <input type="number" step="0.1" id="worker-rate" value="1.0" required class="w-full border rounded p-2 outline-none">
-                </div>
-                <button type="submit" class="md:col-span-3 bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition">Добавить рабочего</button>
-            </form>
+<script>
+const { jsPDF } = window.jspdf;
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-2">Имя</th>
-                            <th class="px-4 py-2">Роль</th>
-                            <th class="px-4 py-2">Коэффициент</th>
-                            <th class="px-4 py-2">Действие</th>
-                        </tr>
-                    </thead>
-                    <tbody id="workers-table-body">
-                        <!-- Динамические строки -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+let state = {
+  project: null,
+  materials: [],
+  layers: [],
+  logs: [],
+  workers: [],
+  workDays: [],
+  payments: [],
+  totalPrice: 0,
+  minDayPrice: 3000
+};
 
-    </main>
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  setToday();
+  render();
+  registerServiceWorker();
+  
+  // Инициализация обработчиков вкладок
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tabName = btn.getAttribute('data-tab');
+      if(tabName) switchTab(tabName);
+    });
+  });
+});
 
-    <!-- Скрипты бизнес-логики приложения -->
-    <script>
-        // Инициализация структуры данных в localStorage
-        let appData = JSON.parse(localStorage.getItem('brigadir_data')) || {
-            project: null,
-            materials: [
-                { id: 1, name: "Минеральная вата 100мм", type: "Утеплитель" },
-                { id: 2, name: "Пленка пароизоляционная", type: "Пароизоляция" }
-            ],
-            logs: [],
-            workers: []
-        };
+function registerServiceWorker() {
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('data:application/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(clients.claim()));').catch(() => {});
+  }
+}
 
-        function saveData() {
-            localStorage.setItem('brigadir_data', JSON.stringify(appData));
-            updateUI();
-        }
+function setToday() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('projectStartDate').value = today;
+  document.getElementById('logDate').value = today;
+}
 
-        // Обновление интерфейса
-        function updateUI() {
-            // Текущий проект
-            if (appData.project) {
-                document.getElementById('view-proj-name').innerText = appData.project.name;
-                document.getElementById('view-proj-address').innerText = appData.project.address || '—';
-                document.getElementById('view-proj-area').innerText = appData.project.area;
-                document.getElementById('view-proj-date').innerText = appData.project.date || '—';
-                document.getElementById('delete-project-btn').classList.remove('hidden');
-            } else {
-                document.getElementById('view-proj-name').innerText = '—';
-                document.getElementById('view-proj-address').innerText = '—';
-                document.getElementById('view-proj-area').innerText = '—';
-                document.getElementById('view-proj-date').innerText = '—';
-                document.getElementById('delete-project-btn').classList.add('hidden');
-            }
+function showSyncBadge() {
+  const badge = document.getElementById('syncBadge');
+  badge.textContent = '✓ Сохранено';
+  badge.style.background = '#4caf50';
+  setTimeout(() => {
+    badge.textContent = 'Данные сохранены';
+  }, 2000);
+}
 
-            // Рендер материалов в таблицу и селектор
-            const matTable = document.getElementById('materials-table-body');
-            const matSelect = document.getElementById('log-material');
-            matTable.innerHTML = '';
-            matSelect.innerHTML = '';
-            
-            appData.materials.forEach(mat => {
-                matTable.innerHTML += `
-                    <tr class="border-b">
-                        <td class="px-4 py-2 text-gray-900">${mat.name}</td>
-                        <td class="px-4 py-2">${mat.type}</td>
-                        <td class="px-4 py-2"><button onclick="deleteMaterial(${mat.id})" class="text-red-500 hover:underline">Удалить</button></td>
-                    </tr>`;
-                matSelect.innerHTML += `<option value="${mat.name}">${mat.name} (${mat.type})</option>`;
-            });
+function switchTab(tabName) {
+  event?.preventDefault();
+  
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  
+  const btn = document.querySelector(`[data-tab="${tabName}"]`);
+  const content = document.getElementById(tabName);
+  
+  if(btn) btn.classList.add('active');
+  if(content) content.classList.add('active');
+  
+  if(tabName === 'stats') renderStats();
+  if(tabName === 'logging') renderLogsHistory();
+  if(tabName === 'workers') {
+    document.getElementById('totalPrice').value = state.totalPrice || '';
+    document.getElementById('minDayPrice').value = state.minDayPrice || 3000;
+    updateWorkersCalendar();
+  }
+  
+  document.getElementById('exportBtn').style.display = state.project ? 'block' : 'none';
+}
 
-            // Рендер логов
-            const logTable = document.getElementById('logs-table-body');
-            logTable.innerHTML = '';
-            appData.logs.forEach(log => {
-                logTable.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">${log.date}</td>
-                        <td class="px-4 py-2">${log.layer}</td>
-                        <td class="px-4 py-2 text-gray-900">${log.material}</td>
-                        <td class="px-4 py-2">+${log.up} м² / -${log.used} м²</td>
-                        <td class="px-4 py-2 text-xs italic">${log.notes || '—'}</td>
-                    </tr>`;
-            });
+// ===== ПРОЕКТ =====
+function saveProject() {
+  const name = document.getElementById('projectName').value.trim();
+  const address = document.getElementById('projectAddress').value.trim();
+  const area = parseFloat(document.getElementById('projectArea').value);
+  const startDate = document.getElementById('projectStartDate').value;
+  const notes = document.getElementById('projectNotes').value.trim();
+  
+  if(!name || !area) {
+    alert('Заполните название и площадь объекта');
+    return;
+  }
+  
+  state.project = { name, address, area, startDate, notes, createdAt: new Date().toISOString() };
+  saveState();
+  render();
+  showSyncBadge();
+  alert('Проект сохранён!');
+}
 
-            // Рендер рабочих
-            const workerTable = document.getElementById('workers-table-body');
-            workerTable.innerHTML = '';
-            appData.workers.forEach((w, idx) => {
-                workerTable.innerHTML += `
-                    <tr class="border-b">
-                        <td class="px-4 py-2 text-gray-900">${w.name}</td>
-                        <td class="px-4 py-2">${w.role}</td>
-                        <td class="px-4 py-2">${w.rate}</td>
-                        <td class="px-4 py-2"><button onclick="deleteWorker(${idx})" class="text-red-500 hover:underline">Удалить</button></td>
-                    </tr>`;
-            });
-        }
+function deleteProject() {
+  if(confirm('Удалить проект и все данные?')) {
+    state = { project: null, materials: [], layers: [], logs: [] };
+    saveState();
+    render();
+    showSyncBadge();
+  }
+}
 
-        // Слушатели форм
-        document.getElementById('project-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            appData.project = {
-                name: document.getElementById('proj-name').value,
-                address: document.getElementById('proj-address').value,
-                area: document.getElementById('proj-area').value,
-                date: document.getElementById('proj-date').value,
-                notes: document.getElementById('proj-notes').value
-            };
-            saveData();
-            e.target.reset();
-        });
+// ===== МАТЕРИАЛЫ =====
+function addUnitInput() {
+  const html = `
+    <div class="conversion-row">
+      <input type="text" placeholder="м²" class="unit-name" value="">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div><label style="font-size: 11px;">м²</label><input type="number" class="unit-m2" placeholder="1" min="0" step="0.1"></div>
+        <div><label style="font-size: 11px;">м³</label><input type="number" class="unit-m3" placeholder="0.05" min="0" step="0.1"></div>
+      </div>
+      <button class="button danger small" onclick="removeUnitInput(this)">✕</button>
+    </div>
+  `;
+  document.getElementById('matUnitsInput').insertAdjacentHTML('beforeend', html);
+}
 
-        document.getElementById('delete-project-btn').addEventListener('click', () => {
-            if(confirm('Удалить текущий проект?')) {
-                appData.project = null;
-                saveData();
-            }
-        });
+function removeUnitInput(btn) {
+  btn.closest('.conversion-row').remove();
+}
 
-        document.getElementById('material-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            appData.materials.push({
-                id: Date.now(),
-                name: document.getElementById('mat-name').value,
-                type: document.getElementById('mat-type').value
-            });
-            saveData();
-            e.target.reset();
-        });
+function saveMaterial() {
+  const name = document.getElementById('matName').value.trim();
+  const type = document.getElementById('matType').value;
+  
+  if(!name) {
+    alert('Укажите название материала');
+    return;
+  }
+  
+  const units = [];
+  document.querySelectorAll('#matUnitsInput .conversion-row').forEach(row => {
+    const unitName = row.querySelector('.unit-name').value.trim();
+    const m2 = parseFloat(row.querySelector('.unit-m2').value) || 0;
+    const m3 = parseFloat(row.querySelector('.unit-m3').value) || 0;
+    
+    if(unitName && (m2 > 0 || m3 > 0)) {
+      units.push({ unit: unitName, m2, m3 });
+    }
+  });
+  
+  if(units.length === 0) {
+    alert('Добавьте хотя бы одну единицу измерения');
+    return;
+  }
+  
+  state.materials.push({
+    id: Date.now(),
+    name,
+    type,
+    units,
+    defaultUnit: units[0].unit
+  });
+  
+  document.getElementById('matName').value = '';
+  document.getElementById('matUnitsInput').innerHTML = `
+    <div class="conversion-row">
+      <input type="text" placeholder="Единица" class="unit-name" value="поддон">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div><label style="font-size: 11px;">м²</label><input type="number" class="unit-m2" placeholder="140" min="0" step="0.1"></div>
+        <div><label style="font-size: 11px;">м³</label><input type="number" class="unit-m3" placeholder="7" min="0" step="0.1"></div>
+      </div>
+      <button class="button danger small" onclick="removeUnitInput(this)">✕</button>
+    </div>
+  `;
+  
+  saveState();
+  renderMaterials();
+  showSyncBadge();
+  alert('Материал добавлен!');
+}
 
-        function deleteMaterial(id) {
-            appData.materials = appData.materials.filter(m => m.id !== id);
-            saveData();
-        }
+function deleteMaterial(id) {
+  if(confirm('Удалить материал?')) {
+    state.materials = state.materials.filter(m => m.id !== id);
+    saveState();
+    renderMaterials();
+    showSyncBadge();
+  }
+}
 
-        document.getElementById('log-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            appData.logs.push({
-                date: document.getElementById('log-date').value,
-                layer: document.getElementById('log-layer').value,
-                material: document.getElementById('log-material').value,
-                up: document.getElementById('log-up-m2').value,
-                used: document.getElementById('log-used-m2').value,
-                notes: document.getElementById('log-notes').value
-            });
-            saveData();
-            e.target.reset();
-        });
+function renderMaterials() {
+  const list = document.getElementById('materialsList');
+  
+  if(state.materials.length === 0) {
+    list.innerHTML = '<div class="empty-state">Материалы не добавлены</div>';
+    return;
+  }
+  
+  list.innerHTML = state.materials.map(mat => {
+    const unitsHtml = mat.units.map(u => `
+      <div class="unit-badge">${u.unit}: ${u.m2}м² / ${u.m3}м³</div>
+    `).join('');
+    
+    return `
+      <div class="material-card">
+        <div style="display: flex; justify-content: space-between; align-items: start; gap: 8px;">
+          <div style="flex: 1;">
+            <h3>${mat.name}</h3>
+            <div class="material-specs">${mat.type}</div>
+            <div class="material-units">${unitsHtml}</div>
+          </div>
+          <button class="button danger small" onclick="deleteMaterial(${mat.id})">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
-        document.getElementById('worker-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            appData.workers.push({
-                name: document.getElementById('worker-name').value,
-                role: document.getElementById('worker-role').value,
-                rate: document.getElementById('worker-rate').value
-            });
-            saveData();
-            e.target.reset();
-        });
+// ===== СЛОИ =====
+function addLayer() {
+  const newLayer = {
+    id: Date.now(),
+    name: 'Новый слой',
+    materials: []
+  };
+  state.layers.push(newLayer);
+  saveState();
+  renderLayers();
+  showSyncBadge();
+}
 
-        function deleteWorker(idx) {
-            appData.workers.splice(idx, 1);
-            saveData();
-        }
+function deleteLayer(id) {
+  state.layers = state.layers.filter(l => l.id !== id);
+  saveState();
+  renderLayers();
+  showSyncBadge();
+}
 
-        // Запуск при старте
-        window.onload = () => {
-            updateUI();
-            // Дефолтная дата сегодня в форму логов
-            document.getElementById('log-date').valueAsDate = new Date();
-        };
+function updateLayer(id, name) {
+  const layer = state.layers.find(l => l.id === id);
+  if(layer) layer.name = name;
+  saveState();
+  showSyncBadge();
+}
 
-        // Регистрация Service Worker для PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('PWA Service Worker готов.'))
-                .catch(err => console.error(err));
-        }
-    </script>
+function addLayerMaterial(layerId) {
+  const layer = state.layers.find(l => l.id === layerId);
+  if(layer) {
+    layer.materials.push({ id: Date.now(), materialId: null, planned: 0 });
+    saveState();
+    renderLayers();
+    showSyncBadge();
+  }
+}
+
+function deleteLayerMaterial(layerId, matId) {
+  const layer = state.layers.find(l => l.id === layerId);
+  if(layer) {
+    layer.materials = layer.materials.filter(m => m.id !== matId);
+    saveState();
+    renderLayers();
+    showSyncBadge();
+  }
+}
+
+function updateLayerMaterial(layerId, matId, materialId, planned) {
+  const layer = state.layers.find(l => l.id === layerId);
+  if(layer) {
+    const lm = layer.materials.find(m => m.id === matId);
+    if(lm) {
+      lm.materialId = parseInt(materialId);
+      lm.planned = parseFloat(planned) || 0;
+    }
+  }
+  saveState();
+  showSyncBadge();
+}
+
+function renderLayers() {
+  const list = document.getElementById('layersList');
+  
+  if(state.layers.length === 0) {
+    list.innerHTML = '<div class="empty-state">Слои не добавлены</div>';
+    return;
+  }
+  
+  list.innerHTML = state.layers.map(layer => {
+    const matsHtml = layer.materials.map(lm => {
+      const mat = state.materials.find(m => m.id === lm.materialId);
+      return `
+        <div style="display: grid; grid-template-columns: 1fr 120px 80px 40px; gap: 8px; margin-bottom: 8px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+          <select onchange="updateLayerMaterial(${layer.id}, ${lm.id}, this.value, document.querySelector('[data-plan-${lm.id}]').value)" style="font-size: 13px;">
+            <option value="">Материал</option>
+            ${state.materials.map(m => `<option value="${m.id}" ${lm.materialId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+          </select>
+          <input type="number" placeholder="План" value="${lm.planned}" min="0" step="0.1" data-plan-${lm.id} onchange="updateLayerMaterial(${layer.id}, ${lm.id}, ${lm.materialId}, this.value)" style="font-size: 13px;">
+          <span style="font-size: 12px; color: var(--text-secondary);">${mat?.defaultUnit || 'шт'}</span>
+          <button class="button danger small" onclick="deleteLayerMaterial(${layer.id}, ${lm.id})">✕</button>
+        </div>
+      `;
+    }).join('');
+    
+    return `
+      <div style="background: var(--surface-1); padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; border: 1px solid var(--border);">
+        <input type="text" value="${layer.name}" placeholder="Название слоя" style="font-size: 15px; font-weight: 500; border: none; background: transparent; width: 100%; margin-bottom: 1rem; padding: 0;" onchange="updateLayer(${layer.id}, this.value)">
+        ${matsHtml}
+        <button class="button small" onclick="addLayerMaterial(${layer.id})" style="margin-right: 8px;">+ Материал</button>
+        <button class="button danger small" onclick="deleteLayer(${layer.id})">Удалить слой</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== ЛОГИРОВАНИЕ =====
+function updateMaterialUnits() {
+  const matId = parseInt(document.getElementById('logMaterial').value);
+  const mat = state.materials.find(m => m.id === matId);
+  const unitSelect = document.getElementById('logUnit');
+  
+  unitSelect.innerHTML = '<option value="">Выберите единицу</option>';
+  if(mat) {
+    mat.units.forEach(u => {
+      unitSelect.innerHTML += `<option value="${u.unit}">${u.unit}</option>`;
+    });
+  }
+  
+  document.getElementById('logAmount').addEventListener('change', calculateConversion);
+  document.getElementById('logUnit').addEventListener('change', calculateConversion);
+}
+
+function calculateConversion() {
+  const matId = parseInt(document.getElementById('logMaterial').value);
+  const unit = document.getElementById('logUnit').value;
+  const amount = parseFloat(document.getElementById('logAmount').value) || 0;
+  
+  const mat = state.materials.find(m => m.id === matId);
+  if(!mat || !unit) return;
+  
+  const unitSpec = mat.units.find(u => u.unit === unit);
+  if(!unitSpec) return;
+  
+  const raisedM2 = Math.round(amount * unitSpec.m2 * 100) / 100;
+  const raisedM3 = Math.round(amount * unitSpec.m3 * 100) / 100;
+  
+  document.getElementById('logRaisedM2').value = raisedM2;
+  document.getElementById('logRaisedM3').value = raisedM3;
+}
+
+function addLog() {
+  const date = document.getElementById('logDate').value;
+  const layerId = parseInt(document.getElementById('logLayer').value);
+  const matId = parseInt(document.getElementById('logMaterial').value);
+  const unit = document.getElementById('logUnit').value;
+  const amount = parseFloat(document.getElementById('logAmount').value) || 0;
+  const usedM2 = parseFloat(document.getElementById('logUsedM2').value) || 0;
+  const usedM3 = parseFloat(document.getElementById('logUsedM3').value) || 0;
+  const note = document.getElementById('logNote').value.trim();
+  const photoFile = document.getElementById('logPhoto').files[0];
+  
+  if(!date || !layerId || !matId || !unit || amount === 0) {
+    alert('Заполните обязательные поля');
+    return;
+  }
+  
+  const raisedM2 = parseFloat(document.getElementById('logRaisedM2').value) || 0;
+  const raisedM3 = parseFloat(document.getElementById('logRaisedM3').value) || 0;
+  
+  const log = {
+    id: Date.now(),
+    date,
+    layerId,
+    matId,
+    unit,
+    amount,
+    raisedM2,
+    raisedM3,
+    usedM2,
+    usedM3,
+    note,
+    photo: null
+  };
+  
+  if(photoFile) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      log.photo = e.target.result;
+      state.logs.push(log);
+      saveState();
+      clearLoggingForm();
+      renderLogsHistory();
+      showSyncBadge();
+      alert('Запись добавлена!');
+    };
+    reader.readAsDataURL(photoFile);
+  } else {
+    state.logs.push(log);
+    saveState();
+    clearLoggingForm();
+    renderLogsHistory();
+    showSyncBadge();
+    alert('Запись добавлена!');
+  }
+}
+
+function clearLoggingForm() {
+  document.getElementById('logAmount').value = '';
+  document.getElementById('logRaisedM2').value = '';
+  document.getElementById('logRaisedM3').value = '';
+  document.getElementById('logUsedM2').value = '';
+  document.getElementById('logUsedM3').value = '';
+  document.getElementById('logNote').value = '';
+  document.getElementById('logPhoto').value = '';
+  document.getElementById('photoPreview').style.display = 'none';
+}
+
+function deleteLog(id) {
+  state.logs = state.logs.filter(l => l.id !== id);
+  saveState();
+  renderLogsHistory();
+  showSyncBadge();
+}
+
+function renderLogsHistory() {
+  const historyDiv = document.getElementById('logsHistory');
+  if(state.logs.length === 0) {
+    historyDiv.innerHTML = '<div class="empty-state">Записей нет</div>';
+    return;
+  }
+  
+  const sorted = [...state.logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  historyDiv.innerHTML = sorted.map(log => {
+    const layer = state.layers.find(l => l.id === log.layerId);
+    const mat = state.materials.find(m => m.id === log.matId);
+    
+    return `
+      <div class="log-item">
+        <div class="log-header">
+          <div style="flex: 1;">
+            <div class="log-date">${log.date}</div>
+            <div class="log-details">${layer?.name || 'N/A'} → ${mat?.name || 'N/A'}</div>
+          </div>
+          <button class="button danger small" onclick="deleteLog(${log.id})">✕</button>
+        </div>
+        <div style="font-size: 12px; margin-bottom: 8px;">
+          <strong>${log.amount} ${log.unit}</strong> | 
+          Поднято: ${log.raisedM2}м² / ${log.raisedM3}м³ | 
+          Использовано: ${log.usedM2}м² / ${log.usedM3}м³
+        </div>
+        ${log.note ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;"><strong>Примечание:</strong> ${log.note}</div>` : ''}
+        ${log.photo ? `<img src="${log.photo}" class="log-photo" alt="Фото слоя">` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== СТАТИСТИКА =====
+function renderStats() {
+  const statsDiv = document.getElementById('statsContent');
+  
+  if(state.layers.length === 0) {
+    statsDiv.innerHTML = '<div class="empty-state">Нет данных для статистики</div>';
+    return;
+  }
+  
+  let html = '<div class="stats-grid">';
+  
+  state.layers.forEach(layer => {
+    layer.materials.forEach(lm => {
+      if(!lm.materialId) return;
+      
+      const mat = state.materials.find(m => m.id === lm.materialId);
+      if(!mat) return;
+      
+      const matLogs = state.logs.filter(log => log.layerId === layer.id && log.matId === lm.materialId);
+      const totalRaisedM2 = matLogs.reduce((sum, log) => sum + log.raisedM2, 0);
+      const totalUsedM2 = matLogs.reduce((sum, log) => sum + log.usedM2, 0);
+      const totalUsedM3 = matLogs.reduce((sum, log) => sum + log.usedM3, 0);
+      
+      const unitSpec = mat.units.find(u => u.unit === mat.defaultUnit);
+      const plannedM2 = lm.planned * (unitSpec?.m2 || 1);
+      const remainingM2 = plannedM2 - totalUsedM2;
+      
+      const statusColor = remainingM2 < 0 ? 'var(--text-danger)' : remainingM2 < (plannedM2 * 0.2) ? 'var(--text-warning)' : 'var(--text-primary)';
+      
+      html += `
+        <div class="stat-card">
+          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;"><strong>${layer.name}</strong></div>
+          <div style="font-size: 12px; margin-bottom: 10px;">${mat.name}</div>
+          <table style="font-size: 11px; width: 100%; margin: 0;">
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 3px 0;">План:</td>
+              <td style="text-align: right;"><strong>${Math.round(plannedM2 * 100) / 100}м²</strong></td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 3px 0;">Поднято:</td>
+              <td style="text-align: right;"><strong>${Math.round(totalRaisedM2 * 100) / 100}м²</strong></td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 3px 0;">Использовано:</td>
+              <td style="text-align: right;"><strong>${Math.round(totalUsedM2 * 100) / 100}м²</strong></td>
+            </tr>
+            <tr>
+              <td style="padding: 3px 0;">Остаток:</td>
+              <td style="text-align: right; color: ${statusColor}; font-weight: 600;">${Math.round(remainingM2 * 100) / 100}м²</td>
+            </tr>
+          </table>
+        </div>
+      `;
+    });
+  });
+  
+  html += '</div>';
+  statsDiv.innerHTML = html || '<div class="empty-state">Нет материалов в слоях</div>';
+}
+
+// ===== ЭКСПОРТ PDF =====
+function exportPDF() {
+  if(!state.project) {
+    alert('Проект не создан');
+    return;
+  }
+  
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 10;
+  
+  doc.setFontSize(16);
+  doc.text('ОТЧЁТ СТРОИТЕЛЬНЫХ РАБОТ', 10, y);
+  y += 8;
+  
+  doc.setFontSize(10);
+  doc.text(`Объект: ${state.project.name}`, 10, y);
+  y += 5;
+  doc.text(`Адрес: ${state.project.address}`, 10, y);
+  y += 5;
+  doc.text(`Площадь кровли: ${state.project.area} м²`, 10, y);
+  y += 5;
+  doc.text(`Дата начала: ${state.project.startDate}`, 10, y);
+  y += 5;
+  if(state.project.notes) {
+    doc.text(`Примечания: ${state.project.notes}`, 10, y);
+    y += 5;
+  }
+  y += 5;
+  
+  doc.setFontSize(12);
+  doc.text('История работ:', 10, y);
+  y += 6;
+  
+  doc.setFontSize(9);
+  const tableData = state.logs
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .map(log => {
+      const layer = state.layers.find(l => l.id === log.layerId);
+      const mat = state.materials.find(m => m.id === log.matId);
+      return [
+        log.date,
+        layer?.name || 'N/A',
+        mat?.name || 'N/A',
+        `${log.amount} ${log.unit}`,
+        `${log.raisedM2}м²`,
+        `${log.usedM2}м²`,
+        log.note || ''
+      ];
+    });
+  
+  doc.autoTable({
+    head: [['Дата', 'Слой', 'Материал', 'Кол-во', 'Поднято', 'Использовано', 'Примечание']],
+    body: tableData,
+    startY: y,
+    margin: 10,
+    theme: 'grid',
+    fontSize: 8,
+    columnStyles: {
+      0: { cellWidth: 20 },
+      1: { cellWidth: 25 },
+      2: { cellWidth: 25 },
+      3: { cellWidth: 20 },
+      4: { cellWidth: 20 },
+      5: { cellWidth: 20 },
+      6: { cellWidth: 25 }
+    }
+  });
+  
+  y = doc.lastAutoTable.finalY + 10;
+  
+  doc.setFontSize(12);
+  doc.text('Статистика материалов:', 10, y);
+  y += 6;
+  
+  doc.setFontSize(9);
+  const statsData = [];
+  state.layers.forEach(layer => {
+    layer.materials.forEach(lm => {
+      if(!lm.materialId) return;
+      const mat = state.materials.find(m => m.id === lm.materialId);
+      if(!mat) return;
+      
+      const matLogs = state.logs.filter(log => log.layerId === layer.id && log.matId === lm.materialId);
+      const totalUsedM2 = matLogs.reduce((sum, log) => sum + log.usedM2, 0);
+      
+      const unitSpec = mat.units.find(u => u.unit === mat.defaultUnit);
+      const plannedM2 = lm.planned * (unitSpec?.m2 || 1);
+      const remainingM2 = plannedM2 - totalUsedM2;
+      
+      statsData.push([
+        layer.name,
+        mat.name,
+        `${lm.planned} ${mat.defaultUnit}`,
+        `${Math.round(plannedM2 * 100) / 100}м²`,
+        `${Math.round(totalUsedM2 * 100) / 100}м²`,
+        `${Math.round(remainingM2 * 100) / 100}м²`
+      ]);
+    });
+  });
+  
+  if(statsData.length > 0) {
+    doc.autoTable({
+      head: [['Слой', 'Материал', 'План', 'План (м²)', 'Использовано', 'Остаток']],
+      body: statsData,
+      startY: y,
+      margin: 10,
+      theme: 'grid',
+      fontSize: 8
+    });
+  }
+  
+  const fileName = `${state.project.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
+}
+
+// ===== STORAGE =====
+function saveState() {
+  localStorage.setItem('brigadeRoofState', JSON.stringify(state));
+}
+
+function loadState() {
+  const saved = localStorage.getItem('brigadeRoofState');
+  if(saved) {
+    try {
+      state = JSON.parse(saved);
+    } catch (e) {
+      console.error('Load error:', e);
+    }
+  }
+}
+
+// ===== РАБОЧИЕ =====
+function addWorker() {
+  const name = document.getElementById('workerName').value.trim();
+  const prof = document.getElementById('workerProf').value;
+  const coef = parseFloat(document.getElementById('workerCoef').value);
+  
+  if(!name || !coef) {
+    alert('Заполните все поля');
+    return;
+  }
+  
+  state.workers.push({
+    id: Date.now(),
+    name,
+    prof,
+    coef
+  });
+  
+  document.getElementById('workerName').value = '';
+  document.getElementById('workerCoef').value = '';
+  
+  saveState();
+  showSyncBadge();
+  updateWorkersCalendar();
+  alert('Рабочий добавлен!');
+}
+
+function deleteWorker(id) {
+  state.workers = state.workers.filter(w => w.id !== id);
+  saveState();
+  updateWorkersCalendar();
+  showSyncBadge();
+}
+
+function updateWorker(id, name, prof, coef) {
+  const worker = state.workers.find(w => w.id === id);
+  if(worker) {
+    worker.name = name;
+    worker.prof = prof;
+    worker.coef = parseFloat(coef) || 1;
+  }
+  saveState();
+  showSyncBadge();
+}
+
+function getWorkDates() {
+  if(!state.project) return { start: null, end: null, allDates: [] };
+  
+  const startDate = new Date(state.project.startDate);
+  const logs = state.logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const lastLogDate = logs.length > 0 ? new Date(logs[0].date) : new Date();
+  
+  const allDates = [];
+  let current = new Date(startDate);
+  while(current <= lastLogDate) {
+    allDates.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+  
+  return { start: startDate, end: lastLogDate, allDates };
+}
+
+function getWorkDayStatus(workerId, date) {
+  const key = `${workerId}-${date}`;
+  const dayInfo = state.workDays.find(d => d.key === key);
+  return dayInfo ? dayInfo.status : 'none'; // none, half, full
+}
+
+function setWorkDayStatus(workerId, date, status) {
+  const key = `${workerId}-${date}`;
+  const existing = state.workDays.find(d => d.key === key);
+  
+  if(existing) {
+    existing.status = status;
+  } else {
+    state.workDays.push({ key, workerId, date, status });
+  }
+  
+  saveState();
+  updateWorkersCalendar();
+  showSyncBadge();
+}
+
+function cycleWorkStatus(workerId, date) {
+  const current = getWorkDayStatus(workerId, date);
+  let next = 'none';
+  if(current === 'none') next = 'full';
+  else if(current === 'full') next = 'half';
+  else if(current === 'half') next = 'none';
+  
+  setWorkDayStatus(workerId, date, next);
+}
+
+function calculateSalary() {
+  state.totalPrice = parseFloat(document.getElementById('totalPrice').value) || 0;
+  state.minDayPrice = parseFloat(document.getElementById('minDayPrice').value) || 3000;
+  
+  const coefSum = state.workers.reduce((sum, w) => sum + w.coef, 0);
+  const results = {};
+  
+  state.workers.forEach(worker => {
+    const dailySalary = coefSum > 0 ? (state.totalPrice / coefSum) * worker.coef : 0;
+    results[worker.id] = { dailySalary, totalSalary: 0 };
+  });
+  
+  return results;
+}
+
+function updateWorkersCalendar() {
+  const { allDates } = getWorkDates();
+  const calendarDiv = document.getElementById('workersCalendar');
+  
+  if(state.workers.length === 0) {
+    calendarDiv.innerHTML = '<div class="empty-state">Рабочих нет</div>';
+    return;
+  }
+  
+  const salary = calculateSalary();
+  const totalCalendarDays = allDates.length;
+  const minPrice = state.minDayPrice;
+  
+  let html = '<table class="workers-table"><thead><tr>';
+  html += '<th class="date-col-header">Дата</th>';
+  
+  // Заголовок с рабочими
+  state.workers.forEach(worker => {
+    html += `<th><div style="min-width: 80px; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+      <div class="worker-header">${worker.name}</div>
+      <div style="font-size: 10px; color: var(--text-secondary);">${worker.prof}</div>
+      <div style="font-size: 10px; font-weight: 600;">K=${worker.coef}</div>
+    </div></th>`;
+  });
+  
+  html += '</tr></thead><tbody>';
+  
+  // Строки с датами
+  allDates.forEach(date => {
+    html += `<tr><td class="date-col">${date}</td>`;
+    
+    state.workers.forEach(worker => {
+      const status = getWorkDayStatus(worker.id, date);
+      const statusText = status === 'full' ? '✓' : status === 'half' ? '½' : '✗';
+      const statusClass = status;
+      
+      html += `<td class="day-cell ${statusClass}" onclick="cycleWorkStatus(${worker.id}, '${date}')">${statusText}</td>`;
+    });
+    
+    html += '</tr>';
+  });
+  
+  // Итоговая строка: ЗП за всю вахту
+  html += '<tr style="background: var(--surface-1); font-weight: 600;"><td class="date-col">Итого за вахту</td>';
+  
+  state.workers.forEach(worker => {
+    const totalSalary = salary[worker.id].dailySalary;
+    html += `<td style="padding: 8px;"><strong>₽${Math.round(totalSalary)}</strong></td>`;
+  });
+  
+  html += '</tr>';
+  
+  // Строка: ЗП в день за всю вахту (с выходными)
+  html += `<tr style="background: #1976d2; color: white;"><td class="date-col" style="color: white;">ЗП/день (${totalCalendarDays} дн.)</td>`;
+  
+  state.workers.forEach(worker => {
+    const totalSalary = salary[worker.id].dailySalary;
+    const perDay = totalCalendarDays > 0 ? Math.round(totalSalary / totalCalendarDays) : 0;
+    const isLow = perDay > 0 && perDay < minPrice;
+    const cellColor = isLow ? 'background: #d32f2f; color: white;' : 'color: white;';
+    
+    html += `<td style="${cellColor} padding: 8px;"><strong>₽${perDay}</strong></td>`;
+  });
+  
+  html += '</tr>';
+  
+  // Строка: ЗП в день за фактические рабочие дни
+  html += `<tr style="background: #f57c00; color: white;"><td class="date-col" style="color: white;">ЗП/раб.день</td>`;
+  
+  state.workers.forEach(worker => {
+    const workerLogs = state.workDays.filter(d => d.workerId === worker.id);
+    let totalWorkDays = 0;
+    workerLogs.forEach(log => {
+      if(log.status === 'full') totalWorkDays += 1;
+      else if(log.status === 'half') totalWorkDays += 0.5;
+    });
+    
+    const totalSalary = salary[worker.id].dailySalary;
+    const perWorkDay = totalWorkDays > 0 ? Math.round(totalSalary / totalWorkDays) : 0;
+    const isLow = perWorkDay > 0 && perWorkDay < minPrice;
+    const cellColor = isLow ? 'background: #d32f2f; color: white;' : 'color: white;';
+    
+    html += `<td style="${cellColor} padding: 8px;"><strong>₽${perWorkDay}</strong></td>`;
+  });
+  
+  html += '</tr>';
+  
+  html += '</tbody></table>';
+  
+  calendarDiv.innerHTML = html;
+  renderPaymentsList();
+}
+
+function addPayment() {
+  const paymentDiv = document.getElementById('paymentsList');
+  const html = `
+    <div class="payment-card" data-payment-id="${Date.now()}">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 50px; gap: 8px; margin-bottom: 8px; align-items: end;">
+        <div>
+          <label style="font-size: 11px;">Дата выплаты</label>
+          <input type="date" class="payment-date" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+        <div>
+          <label style="font-size: 11px;">Рабочий</label>
+          <select class="payment-worker">
+            <option value="">Выберите</option>
+            ${state.workers.map(w => `<option value="${w.id}">${w.name}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 11px;">Сумма (₽)</label>
+          <input type="number" class="payment-amount" placeholder="0" min="0" step="100">
+        </div>
+        <button class="button danger small" onclick="deletePayment('${Date.now()}')">✕</button>
+      </div>
+      <button class="button primary small" onclick="savePayment('${Date.now()}')">Сохранить</button>
+    </div>
+  `;
+  paymentDiv.insertAdjacentHTML('beforeend', html);
+}
+
+function savePayment(id) {
+  const card = document.querySelector(`[data-payment-id="${id}"]`);
+  if(!card) return;
+  
+  const date = card.querySelector('.payment-date').value;
+  const workerId = parseInt(card.querySelector('.payment-worker').value);
+  const amount = parseFloat(card.querySelector('.payment-amount').value) || 0;
+  
+  if(!date || !workerId || amount === 0) {
+    alert('Заполните все поля');
+    return;
+  }
+  
+  state.payments.push({
+    id: Date.now(),
+    date,
+    workerId,
+    amount
+  });
+  
+  saveState();
+  showSyncBadge();
+  renderPaymentsList();
+  alert('Выплата сохранена!');
+}
+
+function deletePayment(id) {
+  state.payments = state.payments.filter(p => p.id !== parseInt(id));
+  saveState();
+  renderPaymentsList();
+  showSyncBadge();
+}
+
+function renderPaymentsList() {
+  const paymentDiv = document.getElementById('paymentsList');
+  
+  if(state.payments.length === 0) {
+    return;
+  }
+  
+  const salary = calculateSalary();
+  
+  let html = '<div style="margin-top: 1.5rem;"><h3>История выплат</h3>';
+  html += '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
+  html += '<tr style="background: var(--surface-1);"><th style="padding: 8px; text-align: left; border-bottom: 1px solid var(--border);">Дата</th><th style="padding: 8px; text-align: left; border-bottom: 1px solid var(--border);">Рабочий</th><th style="padding: 8px; text-align: right; border-bottom: 1px solid var(--border);">Выплачено</th><th style="padding: 8px; text-align: right; border-bottom: 1px solid var(--border);">Остаток</th><th style="width: 40px;"></th></tr>';
+  
+  const grouped = {};
+  state.payments.forEach(p => {
+    if(!grouped[p.workerId]) grouped[p.workerId] = [];
+    grouped[p.workerId].push(p);
+  });
+  
+  state.workers.forEach(worker => {
+    const workerPayments = grouped[worker.id] || [];
+    const totalSalary = Math.round(salary[worker.id]?.dailySalary || 0);
+    const totalPaid = workerPayments.reduce((sum, p) => sum + p.amount, 0);
+    const remaining = totalSalary - totalPaid;
+    
+    if(workerPayments.length === 0 && totalSalary > 0) {
+      html += `<tr style="border-bottom: 1px solid var(--border);">
+        <td colspan="3" style="padding: 8px;">${worker.name}</td>
+        <td style="padding: 8px; text-align: right; color: var(--text-danger); font-weight: 600;">₽${totalSalary}</td>
+        <td></td>
+      </tr>`;
+    } else {
+      workerPayments.forEach((p, idx) => {
+        const paidUpTo = workerPayments.slice(0, idx + 1).reduce((sum, x) => sum + x.amount, 0);
+        const rem = totalSalary - paidUpTo;
+        
+        html += `<tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 8px;">${p.date}</td>
+          <td style="padding: 8px;">${idx === 0 ? worker.name : ''}</td>
+          <td style="padding: 8px; text-align: right;">₽${Math.round(p.amount)}</td>
+          <td style="padding: 8px; text-align: right; font-weight: 600; color: ${rem > 0 ? 'var(--text-danger)' : '#4caf50'};">₽${rem}</td>
+          <td style="text-align: center;"><button class="button danger small" onclick="deletePayment(${p.id})">✕</button></td>
+        </tr>`;
+      });
+    }
+  });
+  
+  html += '</table></div>';
+  paymentDiv.innerHTML += html;
+}
+
+// ===== RENDER =====
+function render() {
+  if(!state.project) {
+    document.getElementById('projectInfo').style.display = 'none';
+  } else {
+    document.getElementById('projectInfo').style.display = 'block';
+    document.getElementById('infoName').textContent = state.project.name;
+    document.getElementById('infoAddress').textContent = state.project.address || '—';
+    document.getElementById('infoArea').textContent = state.project.area + ' м²';
+    document.getElementById('infoDate').textContent = state.project.startDate || '—';
+  }
+  
+  const layerSelect = document.getElementById('logLayer');
+  layerSelect.innerHTML = '<option value="">Выберите слой</option>';
+  state.layers.forEach(layer => {
+    layerSelect.innerHTML += `<option value="${layer.id}">${layer.name}</option>`;
+  });
+  
+  const matSelect = document.getElementById('logMaterial');
+  matSelect.innerHTML = '<option value="">Выберите материал</option>';
+  state.materials.forEach(mat => {
+    matSelect.innerHTML += `<option value="${mat.id}">${mat.name}</option>`;
+  });
+  
+  renderMaterials();
+  renderLayers();
+  
+  document.getElementById('logPhoto').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const preview = document.getElementById('photoPreview');
+        preview.src = event.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+</script>
+
 </body>
 </html>
