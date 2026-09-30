@@ -228,7 +228,7 @@
   .workers-table {
     border-collapse: collapse;
     width: 100%;
-    min-width: 600px;
+    min-width: 700px;
     background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -236,14 +236,35 @@
   
   .workers-table th, .workers-table td {
     border: 1px solid var(--border);
-    padding: 8px;
+    padding: 6px;
     text-align: center;
     font-size: 12px;
   }
   
   .workers-table th { background: var(--surface-1); font-weight: 500; }
-  .workers-table .date-col { font-weight: 500; text-align: left; background: var(--surface-1); }
+  .workers-table .date-col { font-weight: 500; text-align: left; background: var(--surface-1); min-width: 140px; }
   
+  .work-select {
+    width: 100%;
+    padding: 4px;
+    font-size: 11px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-primary);
+  }
+
+  .day-comment {
+    width: 100%;
+    min-width: 70px;
+    padding: 4px;
+    font-size: 10px;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    background: var(--surface-1);
+    color: var(--text-primary);
+  }
+
   .empty-state { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 13px; }
   
   .stock-grid {
@@ -268,7 +289,7 @@
   <div class="header">
     <div>
       <h1>Бригадир кровли</h1>
-      <p>Управление материалами на стройке <span class="sync-badge" id="syncBadge">Данные сохранены</span></p>
+      <p>Управление материалами и табелем выходов <span class="sync-badge" id="syncBadge">Данные сохранены</span></p>
     </div>
     <div class="header-actions">
       <button class="button primary" onclick="exportPDF()" id="exportBtn" style="display:none;">📄 PDF</button>
@@ -382,12 +403,10 @@
     </div>
   </div>
   
-  <!-- ТАБ: РАБОТЫ (ОБНОВЛЕННЫЙ) -->
+  <!-- ТАБ: РАБОТЫ -->
   <div class="tab-content" id="logging">
-    
-    <!-- БЛОК 1: ПОДЪЕМ МАТЕРИАЛА -->
     <div class="section" style="border-top: 4px solid var(--fill-success);">
-      <h2>⬆️ Подъем материала на кровлю</h2>
+      <h2>⬆️️ Подъем материала на кровлю</h2>
       <div class="grid-2">
         <div class="form-group">
           <label>Дата подъема *</label>
@@ -431,14 +450,12 @@
       <button class="button success" onclick="addRaiseLog()">Зафиксировать подъем</button>
     </div>
 
-    <!-- БЛОК 2: ОСТАТКИ НА КРОВЛЕ (ХРАНИЛИЩЕ) -->
     <div class="section" style="background: var(--surface-1);">
       <h2>📦 Наличие материалов на кровле (Остатки)</h2>
-      <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 1rem;">Поднятые, но еще не уложенные материалы, доступные для списания</p>
+      <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 1rem;">Поднятые, но еще не уложенные материалы</p>
       <div id="roofStockList" class="stock-grid"></div>
     </div>
 
-    <!-- БЛОК 3: ИСПОЛЬЗОВАНИЕ МАТЕРИАЛА -->
     <div class="section" style="border-top: 4px solid var(--fill-accent);">
       <h2>🔨 Расход (укладка) материала</h2>
       <div class="grid-2">
@@ -484,9 +501,8 @@
       <button class="button primary" onclick="addUseLog()">Зафиксировать расход</button>
     </div>
     
-    <!-- БЛОК 4: ИСТОРИЯ ОПЕРАЦИЙ -->
     <div class="section">
-      <h2>📋 Общая история операций (Подъемы и Расход)</h2>
+      <h2>📋 Общая история операций</h2>
       <div id="logsHistory"></div>
     </div>
   </div>
@@ -528,11 +544,15 @@
           <input type="number" id="minDayPrice" placeholder="3000" min="0" step="100" value="3000">
         </div>
       </div>
-      <button class="button primary" onclick="updateWorkersCalendar()">Обновить расчёты</button>
+      <button class="button primary" onclick="updateWorkersCalendar()">Обновить параметры</button>
     </div>
 
     <div class="section">
-      <h2>Табель выходов</h2>
+      <h2>Табель выходов и комментариев по дням</h2>
+      <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 1rem;">
+        Укажите статус выхода: <strong>1</strong> (День), <strong>0.5</strong> (Пол дня) или <strong>0</strong> (Не работал). 
+        Внизу таблицы добавьте комментарий о событиях за конкретный день.
+      </p>
       <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <div id="workersCalendar"></div>
       </div>
@@ -555,6 +575,8 @@ let state = {
   layers: [],
   logs: [],
   workers: [],
+  attendance: {}, // { "workerId_YYYY-MM-DD": 1.0 / 0.5 / 0 }
+  dayComments: {}, // { "YYYY-MM-DD": "текст" }
   totalPrice: 0,
   minDayPrice: 3000
 };
@@ -636,7 +658,7 @@ function saveProject() {
 
 function deleteProject() {
   if(confirm('Удалить текущий проект и все данные?')) {
-    state = { project: null, materials: [], layers: [], logs: [], workers: [], totalPrice: 0, minDayPrice: 3000 };
+    state = { project: null, materials: [], layers: [], logs: [], workers: [], attendance: {}, dayComments: {}, totalPrice: 0, minDayPrice: 3000 };
     saveState();
     render();
     showSyncBadge();
@@ -818,9 +840,7 @@ function renderLayers() {
   `).join('');
 }
 
-// ===== НОВАЯ ЛОГИКА ВКЛАДКИ «РАБОТЫ» =====
-
-// Подъем: пересчет единиц
+// ===== РАБОТЫ =====
 function updateRaiseUnits() {
   const matId = parseInt(document.getElementById('raiseMaterial').value);
   const mat = state.materials.find(m => m.id === matId);
@@ -850,7 +870,6 @@ function calculateRaiseConversion() {
   document.getElementById('raiseM3').value = (amount * unitSpec.m3).toFixed(2);
 }
 
-// Добавить подъем
 function addRaiseLog() {
   const date = document.getElementById('raiseDate').value;
   const layerId = parseInt(document.getElementById('raiseLayer').value);
@@ -884,7 +903,6 @@ function addRaiseLog() {
   showSyncBadge();
 }
 
-// Расход: пересчет единиц
 function updateUseUnits() {
   const matId = parseInt(document.getElementById('useMaterial').value);
   const mat = state.materials.find(m => m.id === matId);
@@ -914,7 +932,6 @@ function calculateUseConversion() {
   document.getElementById('useM3').value = (amount * unitSpec.m3).toFixed(2);
 }
 
-// Добавить расход
 function addUseLog() {
   const date = document.getElementById('useDate').value;
   const layerId = parseInt(document.getElementById('useLayer').value);
@@ -948,27 +965,17 @@ function addUseLog() {
   showSyncBadge();
 }
 
-// Расчет и отображение текущих остатков на кровле
 function renderRoofStock() {
   const container = document.getElementById('roofStockList');
   if(!container) return;
   
-  // Агрегируем баланс по связке (слой + материал + единица)
   const stockMap = {};
   
   state.logs.forEach(log => {
     const key = `${log.layerId}_${log.matId}_${log.unit}`;
     if(!stockMap[key]) {
-      stockMap[key] = {
-        layerId: log.layerId,
-        matId: log.matId,
-        unit: log.unit,
-        amount: 0,
-        m2: 0,
-        m3: 0
-      };
+      stockMap[key] = { layerId: log.layerId, matId: log.matId, unit: log.unit, amount: 0, m2: 0, m3: 0 };
     }
-    
     if(log.type === 'raise') {
       stockMap[key].amount += log.amount;
       stockMap[key].m2 += log.m2;
@@ -1007,7 +1014,6 @@ function renderRoofStock() {
   }).join('');
 }
 
-// Удаление записи
 function deleteLog(id) {
   if(confirm('Удалить эту запись из истории?')) {
     state.logs = state.logs.filter(l => l.id !== id);
@@ -1018,7 +1024,6 @@ function deleteLog(id) {
   }
 }
 
-// Отображение объединенной истории
 function renderLogsHistory() {
   const historyDiv = document.getElementById('logsHistory');
   if(!historyDiv) return;
@@ -1054,7 +1059,7 @@ function renderLogsHistory() {
   }).join('');
 }
 
-// ===== РАБОЧИЕ =====
+// ===== РАБОЧИЕ И ТАБЕЛЬ =====
 function addWorker() {
   const name = document.getElementById('workerName').value.trim();
   const prof = document.getElementById('workerProf').value;
@@ -1073,37 +1078,115 @@ function addWorker() {
   showSyncBadge();
 }
 
+function getDaysArray() {
+  const days = [];
+  let startDate = state.project?.startDate ? new Date(state.project.startDate) : new Date();
+  if (isNaN(startDate.getTime())) startDate = new Date();
+
+  // Генерируем 14 дней от даты начала проекта
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
+    days.push(d.toISOString().split('T')[0]);
+  }
+  return days;
+}
+
+function setAttendance(workerId, dateStr, value) {
+  if(!state.attendance) state.attendance = {};
+  state.attendance[`${workerId}_${dateStr}`] = parseFloat(value);
+  saveState();
+  showSyncBadge();
+}
+
+function setDayComment(dateStr, value) {
+  if(!state.dayComments) state.dayComments = {};
+  state.dayComments[dateStr] = value.trim();
+  saveState();
+  showSyncBadge();
+}
+
 function updateWorkersCalendar() {
   const calendarDiv = document.getElementById('workersCalendar');
   if(!calendarDiv) return;
   
+  state.totalPrice = parseFloat(document.getElementById('totalPrice').value) || 0;
+  state.minDayPrice = parseFloat(document.getElementById('minDayPrice').value) || 3000;
+  saveState();
+
   if(state.workers.length === 0) {
     calendarDiv.innerHTML = '<div class="empty-state">Рабочие не добавлены</div>';
     return;
   }
   
-  let html = '<table class="workers-table"><thead><tr><th class="date-col">Рабочий</th><th>Профессия</th><th>Коэф.</th><th>Действие</th></tr></thead><tbody>';
+  const dates = getDaysArray();
+  
+  let html = '<table class="workers-table"><thead><tr><th class="date-col">Рабочий</th><th>Проф.</th><th>Коэф.</th>';
+  
+  dates.forEach(d => {
+    const dateFormatted = d.split('-').slice(1).join('.');
+    html += `<th>${dateFormatted}</th>`;
+  });
+  
+  html += '<th>Отработано (дней)</th><th>Действие</th></tr></thead><tbody>';
   
   state.workers.forEach(w => {
+    let totalWorkerDays = 0;
     html += `
       <tr>
-        <td class="date-col">${w.name}</td>
+        <td class="date-col"><strong>${w.name}</strong></td>
         <td>${w.prof}</td>
         <td>${w.coef}</td>
+    `;
+    
+    dates.forEach(d => {
+      const key = `${w.id}_${d}`;
+      const val = state.attendance && state.attendance[key] !== undefined ? state.attendance[key] : 0;
+      totalWorkerDays += val;
+      
+      html += `
+        <td>
+          <select class="work-select" onchange="setAttendance(${w.id}, '${d}', this.value); updateWorkersCalendar();">
+            <option value="0" ${val === 0 ? 'selected' : ''}>— (0)</option>
+            <option value="0.5" ${val === 0.5 ? 'selected' : ''}>0.5 дня</option>
+            <option value="1" ${val === 1 ? 'selected' : ''}>1 день</option>
+          </select>
+        </td>
+      `;
+    });
+    
+    html += `
+        <td><strong>${totalWorkerDays}</strong></td>
         <td><button class="button danger small" onclick="deleteWorker(${w.id})">✕</button></td>
       </tr>
     `;
   });
+
+  // Строка с текстовыми комментариями к каждой дате
+  html += '<tr style="background: var(--surface-1);"><td class="date-col"><strong>💬 Комментарий к дню</strong></td><td colspan="2" style="font-size:10px; color:var(--text-secondary);">События/Погода</td>';
+  
+  dates.forEach(d => {
+    const commentVal = (state.dayComments && state.dayComments[d]) ? state.dayComments[d] : '';
+    html += `
+      <td>
+        <input type="text" class="day-comment" placeholder="Заметка..." value="${commentVal}" onchange="setDayComment('${d}', this.value)">
+      </td>
+    `;
+  });
+  
+  html += '<td colspan="2"></td></tr>';
   
   html += '</tbody></table>';
   calendarDiv.innerHTML = html;
 }
 
 function deleteWorker(id) {
-  state.workers = state.workers.filter(w => w.id !== id);
-  saveState();
-  updateWorkersCalendar();
-  showSyncBadge();
+  if(confirm('Удалить рабочего?')) {
+    state.workers = state.workers.filter(w => w.id !== id);
+    saveState();
+    updateWorkersCalendar();
+    showSyncBadge();
+  }
 }
 
 // ===== СТАТИСТИКА =====
@@ -1212,7 +1295,9 @@ function saveState() {
 function loadState() {
   const saved = localStorage.getItem('brigadeRoofState');
   if(saved) {
-    try { state = JSON.parse(saved); } catch(e) { console.error(e); }
+    try { 
+      state = Object.assign({ attendance: {}, dayComments: {} }, JSON.parse(saved)); 
+    } catch(e) { console.error(e); }
   }
 }
 </script>
